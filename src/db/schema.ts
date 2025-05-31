@@ -1,13 +1,7 @@
-import {
-  integer,
-  pgTable,
-  varchar,
-  timestamp,
-  jsonb,
-} from "drizzle-orm/pg-core";
+import { uuid, pgTable, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
 
 export const Projects = pgTable("projects", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar({ length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

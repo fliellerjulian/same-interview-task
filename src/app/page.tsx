@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
+import { v4 as uuidv4 } from "uuid";
 
 const PLACEHOLDERS = [
   "showcase my portfolio",
@@ -129,7 +130,7 @@ export default function Home() {
     if (!inputValue) return;
 
     // Generate a unique ID for the chat
-    const chatId = Math.random().toString(36).substring(2, 15);
+    const chatId = uuidv4();
 
     // Store the chat data in sessionStorage before navigation
     sessionStorage.setItem(
@@ -137,6 +138,7 @@ export default function Home() {
       JSON.stringify({
         prompt: inputValue,
         images: uploadedFiles.map((f) => f.url),
+        isNewProject: true,
       })
     );
 

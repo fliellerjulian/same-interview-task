@@ -1,0 +1,39 @@
+import { Context } from "hono";
+import db from "@/db";
+import { Projects } from "@/db/schema";
+
+export const getProjectsRoute = async (c: Context) => {
+  try {
+    const projects = await db.query.Projects.findMany({
+      orderBy: (projects, { desc }) => [desc(projects.createdAt)],
+    });
+
+    return c.json(projects);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return c.json({ error: "Failed to fetch projects" }, 500);
+  }
+};
+
+export const createProjectRoute = async (c: Context) => {
+  try {
+    const { name, chat } = await c.req.json();
+
+    if (!name) {
+      return c.json({ error: "Project name is required" }, 400);
+    }
+
+    const [project] = await db
+      .insert(Projects)
+      .values({
+        name,
+        chat,
+      })
+      .returning();
+
+    return c.json(project);
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return c.json({ error: "Failed to create project" }, 500);
+  }
+};
