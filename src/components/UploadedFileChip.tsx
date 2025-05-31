@@ -1,0 +1,29 @@
+import React from "react";
+
+export function UploadedFileChip({
+  file,
+  onRemove,
+}: {
+  file: { name: string; url: string };
+  onRemove: (url: string) => void;
+}) {
+  return (
+    <span className="relative group inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1 text-sm font-medium text-black shadow-sm select-none min-w-[120px]">
+      <img
+        src={file.url}
+        alt={file.name}
+        className="w-4 h-4 rounded-sm object-cover mr-2"
+      />
+      <span className="truncate max-w-[140px]">{file.name}</span>
+      <button
+        type="button"
+        aria-label="Remove file"
+        onClick={() => onRemove(file.url)}
+        className="absolute left-1 top-1 w-4 h-4 rounded-full flex items-center justify-center text-gray-400 hover:text-black bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+        tabIndex={-1}
+      >
+        ×
+      </button>
+    </span>
+  );
+}

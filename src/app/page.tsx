@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
+import { UploadedFileChip } from "@/components/UploadedFileChip";
 
 const PLACEHOLDERS = [
   "showcase my portfolio",
@@ -95,6 +96,11 @@ export default function Home() {
     }
   }
 
+  // Remove file handler
+  function handleRemoveFile(url: string) {
+    setUploadedFiles((prev) => prev.filter((file) => file.url !== url));
+  }
+
   // Handle file input click
   function handlePaperclipClick() {
     fileInputRef.current?.click();
@@ -144,6 +150,21 @@ export default function Home() {
       </p>
       <form className="w-full flex justify-center" onSubmit={handleSubmit}>
         <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-10 py-8 shadow-lg gap-3 relative">
+          {/* Uploaded files chips */}
+          <div className="absolute left-6 top-4 flex gap-2 flex-wrap z-10">
+            {uploadedFiles.map((file) => (
+              <UploadedFileChip
+                key={file.url}
+                file={file}
+                onRemove={handleRemoveFile}
+              />
+            ))}
+            {uploading && (
+              <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1 text-sm font-medium text-black shadow-sm select-none">
+                Uploading...
+              </span>
+            )}
+          </div>
           <div className="flex items-start gap-3 w-full relative">
             {/* Overlayed placeholder + tab badge */}
             {showTab && !inputValue && (
