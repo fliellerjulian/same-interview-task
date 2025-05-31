@@ -24,4 +24,10 @@ export const Projects = pgTable("projects", {
       }>;
     }>()
     .default({ messages: [] }),
+  code: jsonb("code")
+    .$type<{
+      js: string; // combined or structured JS code (can be JSX)
+      css: string; // corresponding CSS
+    }>()
+    .default({ js: "", css: "" }),
 });
