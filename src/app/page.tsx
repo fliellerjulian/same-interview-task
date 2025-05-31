@@ -131,13 +131,17 @@ export default function Home() {
     // Generate a unique ID for the chat
     const chatId = Math.random().toString(36).substring(2, 15);
 
-    router.push(
-      `/chat/${chatId}?prompt=${encodeURIComponent(
-        inputValue
-      )}&images=${encodeURIComponent(
-        JSON.stringify(uploadedFiles.map((f) => f.url))
-      )}`
+    // Store the chat data in sessionStorage before navigation
+    sessionStorage.setItem(
+      `chat_${chatId}`,
+      JSON.stringify({
+        prompt: inputValue,
+        images: uploadedFiles.map((f) => f.url),
+      })
     );
+
+    // Navigate to the chat page with just the ID
+    router.push(`/chat/${chatId}`);
   }
 
   return (
