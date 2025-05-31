@@ -7,7 +7,9 @@ import { useParams } from "next/navigation";
 
 export default function ChatPage() {
   const params = useParams();
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: "/api/agent",
+  });
 
   const [chatData, setChatData] = useState<{
     prompt: string;
