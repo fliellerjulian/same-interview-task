@@ -7,14 +7,23 @@ import { useParams } from "next/navigation";
 
 export default function ChatPage() {
   const params = useParams();
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: "/api/agent",
-  });
-
   const [chatData, setChatData] = useState<{
     prompt: string;
     images: string[];
   } | null>(null);
+
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: "/api/agent",
+    initialMessages: chatData
+      ? [
+          {
+            id: "1",
+            role: "user",
+            content: chatData.prompt,
+          },
+        ]
+      : [],
+  });
 
   useEffect(() => {
     const storedData = sessionStorage.getItem(`chat_${params.id}`);
