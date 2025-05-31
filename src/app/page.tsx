@@ -151,7 +151,7 @@ export default function Home() {
       <form className="w-full flex justify-center" onSubmit={handleSubmit}>
         <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-10 py-8 shadow-lg gap-3 relative">
           {/* Uploaded files chips */}
-          <div className="absolute left-6 top-4 flex gap-2 flex-wrap z-10">
+          <div className="absolute left-6 top-2 flex gap-2 flex-wrap z-10">
             {uploadedFiles.map((file) => (
               <UploadedFileChip
                 key={file.url}
