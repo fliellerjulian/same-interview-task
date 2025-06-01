@@ -53,7 +53,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center justify-between px-4">
-          <HomeIcon className="size-4" onClick={() => router.push("/")} />
+          <button
+            type="button"
+            aria-label="Home"
+            onClick={() => router.push("/")}
+            className="rounded-md size-7 flex items-center justify-center transition-colors hover:bg-sidebar-accent"
+          >
+            <HomeIcon className="size-4" />
+          </button>
           <h2 className="text-lg font-semibold">Projects</h2>
           <SidebarTrigger />
         </div>
