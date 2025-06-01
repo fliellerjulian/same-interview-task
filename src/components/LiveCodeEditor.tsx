@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as Babel from "@babel/standalone";
 import { Highlight, themes } from "prism-react-renderer";
+import Editor from "@monaco-editor/react";
 
 const generateHTML = (compiledCode: string) => `
 <!DOCTYPE html>
@@ -84,28 +85,20 @@ export default function LiveCodeEditor({
 
   if (mode === "editor") {
     return (
-      <div className="relative h-full w-full">
-        <Highlight theme={themes.nightOwl} code={code} language="jsx">
-          {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <pre className={`${className} p-4 text-sm h-full`} style={style}>
-              {tokens.map((line, i) => (
-                <div key={i} {...getLineProps({ line })}>
-                  <span className="inline-block w-8 text-gray-500 select-none">
-                    {i + 1}
-                  </span>
-                  {line.map((token, key) => (
-                    <span key={key} {...getTokenProps({ token })} />
-                  ))}
-                </div>
-              ))}
-            </pre>
-          )}
-        </Highlight>
-        <textarea
+      <div className="h-full w-full">
+        <Editor
+          height="100%"
+          defaultLanguage="javascript"
           value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="absolute inset-0 w-full h-full p-4 font-mono text-sm bg-transparent resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-transparent caret-black"
-          spellCheck="false"
+          theme="vs-dark"
+          onChange={(value) => setCode(value ?? "")}
+          options={{
+            fontSize: 14,
+            minimap: { enabled: false },
+            wordWrap: "on",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+          }}
         />
       </div>
     );
@@ -135,27 +128,36 @@ export default function LiveCodeEditor({
       <div className="flex h-full">
         <div className="w-1/2 h-full flex flex-col">
           <div className="flex-1 overflow-auto bg-gray-50">
-            <Highlight theme={themes.nightOwl} code={code} language="jsx">
-              {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                <pre className={`${className} p-4 text-sm`} style={style}>
-                  {tokens.map((line, i) => (
-                    <div key={i} {...getLineProps({ line })}>
-                      <span className="inline-block w-8 text-gray-500 select-none">
-                        {i + 1}
-                      </span>
-                      {line.map((token, key) => (
-                        <span key={key} {...getTokenProps({ token })} />
-                      ))}
-                    </div>
-                  ))}
-                </pre>
-              )}
-            </Highlight>
-            <textarea
+            <Editor
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="absolute inset-0 w-1/2 h-[calc(600px-40px)] mt-10 p-4 font-mono text-sm bg-transparent resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-transparent caret-black"
-              spellCheck="false"
+              onValueChange={setCode}
+              highlight={(code) => (
+                <Highlight theme={themes.nightOwl} code={code} language="jsx">
+                  {({
+                    className,
+                    style,
+                    tokens,
+                    getLineProps,
+                    getTokenProps,
+                  }) => (
+                    <pre className={className} style={style}>
+                      {tokens.map((line, i) => (
+                        <div key={i} {...getLineProps({ line })}>
+                          {line.map((token, key) => (
+                            <span key={key} {...getTokenProps({ token })} />
+                          ))}
+                        </div>
+                      ))}
+                    </pre>
+                  )}
+                </Highlight>
+              )}
+              padding={16}
+              className="font-mono text-sm outline-none h-full w-full text-white"
+              style={{ minHeight: "100%", background: "#011627" }}
+              textareaClassName="outline-none"
+              preClassName="!bg-transparent"
+              spellCheck={false}
             />
           </div>
         </div>
