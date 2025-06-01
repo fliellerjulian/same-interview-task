@@ -6,7 +6,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import ChatInput from "@/components/ChatInput";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LiveCodeEditor from "@/components/LiveCodeEditor";
 import React from "react";
@@ -224,13 +223,7 @@ export default function ChatPage() {
     key: string
   ) {
     if (type === "code") {
-      if (isStreaming) {
-        return (
-          <div key={key} className={`max-w-[80%] my-1 self-start`}>
-            <Skeleton className="h-32 w-full rounded-2xl" />
-          </div>
-        );
-      }
+      // Always render code block for code bubbles in chat history
       return (
         <div key={key} className="max-w-[80%] my-1 self-start">
           <ExpandableCodeBlock code={content} />
