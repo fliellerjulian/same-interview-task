@@ -1,10 +1,15 @@
 
-2. Speichern von Projekten + README how to use
-1. Markdown im chat
-3. Code in root browser displayed
-4. gimmicks 
 
+TODO:
+1. chat markdown
+2. stop button
+2. Code in root browser displayed
+3. canvas
 
+KEEP IN MIND:
+- instantly generate project on first message
+- modal to confirm delete project
+- autoscroll to bottom of chat
 - save user messages as well
 - alerts on errors
 - images to projects

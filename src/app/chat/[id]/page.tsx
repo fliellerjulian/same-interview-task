@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
+import ChatInput from "@/components/ChatInput";
 
 export default function ChatPage() {
   const params = useParams();
@@ -57,27 +58,32 @@ export default function ChatPage() {
   if (!dbData) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((message) => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
-          {message.parts.map((part, i) => {
-            switch (part.type) {
-              case "text":
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
-            }
-          })}
-        </div>
-      ))}
-
-      <form onSubmit={handleSubmit}>
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={handleInputChange}
-        />
-      </form>
+    <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
+      <div className="flex flex-col gap-4 mb-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-md whitespace-pre-wrap text-base break-words ${
+              message.role === "user"
+                ? "self-end bg-black text-white rounded-br-md"
+                : "self-start bg-white text-black border border-zinc-200 rounded-bl-md"
+            }`}
+          >
+            {message.parts.map((part, i) => {
+              switch (part.type) {
+                case "text":
+                  return <div key={`${message.id}-${i}`}>{part.text}</div>;
+              }
+            })}
+          </div>
+        ))}
+      </div>
+      <ChatInput
+        value={input}
+        onChange={handleInputChange}
+        onSubmit={handleSubmit}
+        disabled={false}
+      />
     </div>
   );
 }
