@@ -43,6 +43,11 @@ type LiveCodeEditorProps = {
   readOnly?: boolean;
 };
 
+const stripCodeBlockLang = (code: string) => {
+  // Remove a leading jsx, js, or similar line
+  return code.replace(/^[a-zA-Z0-9]*\s*/, "");
+};
+
 export default function LiveCodeEditor({
   mode,
   code: codeProp,
@@ -51,7 +56,7 @@ export default function LiveCodeEditor({
 }: LiveCodeEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const code = codeProp;
+  const code = codeProp ? stripCodeBlockLang(codeProp) : codeProp;
   const setCode = setCodeProp;
 
   useEffect(() => {
