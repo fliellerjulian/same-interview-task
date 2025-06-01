@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as Babel from "@babel/standalone";
-import { Highlight, themes } from "prism-react-renderer";
 import Editor from "@monaco-editor/react";
 
 const generateHTML = (compiledCode: string) => `
@@ -129,35 +128,18 @@ export default function LiveCodeEditor({
         <div className="w-1/2 h-full flex flex-col">
           <div className="flex-1 overflow-auto bg-gray-50">
             <Editor
+              height="100%"
+              defaultLanguage="javascript"
               value={code}
-              onValueChange={setCode}
-              highlight={(code) => (
-                <Highlight theme={themes.nightOwl} code={code} language="jsx">
-                  {({
-                    className,
-                    style,
-                    tokens,
-                    getLineProps,
-                    getTokenProps,
-                  }) => (
-                    <pre className={className} style={style}>
-                      {tokens.map((line, i) => (
-                        <div key={i} {...getLineProps({ line })}>
-                          {line.map((token, key) => (
-                            <span key={key} {...getTokenProps({ token })} />
-                          ))}
-                        </div>
-                      ))}
-                    </pre>
-                  )}
-                </Highlight>
-              )}
-              padding={16}
-              className="font-mono text-sm outline-none h-full w-full text-white"
-              style={{ minHeight: "100%", background: "#011627" }}
-              textareaClassName="outline-none"
-              preClassName="!bg-transparent"
-              spellCheck={false}
+              theme="vs-dark"
+              onChange={(value) => setCode(value ?? "")}
+              options={{
+                fontSize: 14,
+                minimap: { enabled: false },
+                wordWrap: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+              }}
             />
           </div>
         </div>
