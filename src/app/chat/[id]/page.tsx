@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LiveCodeEditor from "@/components/LiveCodeEditor";
 import React from "react";
+import { computeDiff } from "@/lib/utils";
 
 export default function ChatPage() {
   const params = useParams();
@@ -273,45 +274,6 @@ export default function ChatPage() {
       </div>
     );
   }
-
-  // Function to compute diff between two strings
-  const computeDiff = (oldCode: string, newCode: string) => {
-    const oldLines = oldCode.split("\n");
-    const newLines = newCode.split("\n");
-    const additions: string[] = [];
-    const deletions: string[] = [];
-
-    let i = 0,
-      j = 0;
-    while (i < oldLines.length || j < newLines.length) {
-      if (i >= oldLines.length) {
-        additions.push(newLines[j]);
-        j++;
-      } else if (j >= newLines.length) {
-        deletions.push(oldLines[i]);
-        i++;
-      } else if (oldLines[i] === newLines[j]) {
-        i++;
-        j++;
-      } else {
-        // Check if it's an addition or deletion
-        if (j + 1 < newLines.length && oldLines[i] === newLines[j + 1]) {
-          additions.push(newLines[j]);
-          j++;
-        } else if (i + 1 < oldLines.length && oldLines[i + 1] === newLines[j]) {
-          deletions.push(oldLines[i]);
-          i++;
-        } else {
-          additions.push(newLines[j]);
-          deletions.push(oldLines[i]);
-          i++;
-          j++;
-        }
-      }
-    }
-
-    return { additions, deletions };
-  };
 
   // Function to handle accepting changes
   const handleAcceptChanges = () => {
