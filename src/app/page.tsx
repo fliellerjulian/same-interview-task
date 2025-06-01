@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
 import { v4 as uuidv4 } from "uuid";
+import { useProjects } from "@/hooks/use-projects";
 
 const PLACEHOLDERS = [
   "showcase my portfolio",
@@ -33,6 +34,7 @@ export default function Home() {
     { name: string; url: string }[]
   >([]);
   const router = useRouter();
+  const { projects, setProjects } = useProjects();
 
   // Typing animation for placeholder
   useEffect(() => {
@@ -125,30 +127,35 @@ export default function Home() {
     setUploading(false);
   }
 
-  async function handleSubmit(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!inputValue) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
 
-    // Create a new project
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: inputValue.slice(0, 50) + "...",
-        chat: {
-          messages: [
-            {
-              id: uuidv4(),
-              role: "user",
-              content: inputValue,
-            },
-          ],
-        },
-      }),
-    });
-    const data = await response.json();
-    router.push(`/chat/${data.id}`);
-  }
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: inputValue.slice(0, 50) + "...",
+          chat: {
+            messages: [
+              {
+                id: uuidv4(),
+                role: "user",
+                content: inputValue,
+              },
+            ],
+          },
+        }),
+      });
+      const data = await response.json();
+      setProjects([...projects, data]);
+      setInputValue("");
+      router.push(`/chat/${data.id}`);
+    } catch (error) {
+      console.error("Error creating project:", error);
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center px-8">

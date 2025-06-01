@@ -16,6 +16,8 @@ export function AppSidebar() {
   const { projects, loading } = useProjects();
   const router = useRouter();
 
+  console.log(projects);
+
   return (
     <Sidebar>
       <SidebarHeader>
