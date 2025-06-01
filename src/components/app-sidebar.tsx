@@ -57,34 +57,40 @@ export function AppSidebar() {
               No projects yet
             </div>
           ) : (
-            projects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative"
-                onMouseEnter={() => setHoveredId(project.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <SidebarMenuButton
-                  onClick={() => router.push(`/chat/${project.id}`)}
-                  className="flex items-center gap-2 pr-8"
+            [...projects]
+              .sort(
+                (a, b) =>
+                  new Date(b.updatedAt).getTime() -
+                  new Date(a.updatedAt).getTime()
+              )
+              .map((project) => (
+                <div
+                  key={project.id}
+                  className="group relative"
+                  onMouseEnter={() => setHoveredId(project.id)}
+                  onMouseLeave={() => setHoveredId(null)}
                 >
-                  <MessageSquare className="size-4" />
-                  <span className="truncate">{project.name}</span>
-                </SidebarMenuButton>
-                {hoveredId === project.id && (
-                  <button
-                    className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(project.id);
-                    }}
-                    aria-label="Delete project"
+                  <SidebarMenuButton
+                    onClick={() => router.push(`/chat/${project.id}`)}
+                    className="flex items-center gap-2 pr-8"
                   >
-                    <Trash className="size-4 text-muted-foreground hover:text-black" />
-                  </button>
-                )}
-              </div>
-            ))
+                    <MessageSquare className="size-4" />
+                    <span className="truncate">{project.name}</span>
+                  </SidebarMenuButton>
+                  {hoveredId === project.id && (
+                    <button
+                      className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(project.id);
+                      }}
+                      aria-label="Delete project"
+                    >
+                      <Trash className="size-4 text-muted-foreground hover:text-black" />
+                    </button>
+                  )}
+                </div>
+              ))
           )}
         </SidebarGroup>
       </SidebarContent>

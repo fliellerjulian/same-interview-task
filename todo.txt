@@ -5,6 +5,6 @@
 4. gimmicks 
 
 
+- save user messages as well
 - alerts on errors
 - images to projects
-- delete projects function
