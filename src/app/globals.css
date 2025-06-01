@@ -124,3 +124,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+.monaco-editor .my-whole-line-addition {
+  background: rgba(16, 185, 129, 0.4) !important;
+}
+.monaco-editor .my-whole-line-deletion {
+  background: rgba(239, 68, 68, 0.18) !important;
+}

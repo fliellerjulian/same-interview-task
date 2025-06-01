@@ -3,6 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import * as Babel from "@babel/standalone";
 import Editor from "@monaco-editor/react";
+import type { editor as MonacoEditor } from "monaco-editor";
+
+interface IModelDeltaDecoration {
+  range: {
+    startLineNumber: number;
+    startColumn: number;
+    endLineNumber: number;
+    endColumn: number;
+  };
+  options: {
+    isWholeLine: boolean;
+    className: string;
+    glyphMarginClassName: string;
+  };
+}
 
 const generateHTML = (compiledCode: string) => `
 <!DOCTYPE html>
@@ -41,6 +56,10 @@ type LiveCodeEditorProps = {
   code?: string;
   setCode?: (code: string) => void;
   readOnly?: boolean;
+  highlightChanges?: {
+    additions: string[];
+    deletions: string[];
+  } | null;
 };
 
 const stripCodeBlockLang = (code: string) => {
@@ -53,11 +72,77 @@ export default function LiveCodeEditor({
   code: codeProp,
   setCode: setCodeProp,
   readOnly = false,
+  highlightChanges,
 }: LiveCodeEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const decorationIdsRef = useRef<string[]>([]);
   const code = codeProp ? stripCodeBlockLang(codeProp) : codeProp;
   const setCode = setCodeProp;
+
+  // Function to get line decorations for diff highlighting
+  const getLineDecorations = () => {
+    if (!highlightChanges || !code) return [];
+    const lines = code.split("\n");
+    const decorations: IModelDeltaDecoration[] = [];
+    highlightChanges.additions.forEach((line) => {
+      const lineNumber = lines.findIndex((l) => l === line) + 1;
+      if (lineNumber > 0) {
+        decorations.push({
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: 1,
+            endLineNumber: lineNumber,
+            endColumn: 1000,
+          },
+          options: {
+            isWholeLine: true,
+            className: "my-whole-line-addition",
+            glyphMarginClassName: "bg-green-600",
+          },
+        });
+      }
+    });
+    highlightChanges.deletions.forEach((line) => {
+      const lineNumber = lines.findIndex((l) => l === line) + 1;
+      if (lineNumber > 0) {
+        decorations.push({
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: 1,
+            endLineNumber: lineNumber,
+            endColumn: 1000,
+          },
+          options: {
+            isWholeLine: true,
+            className: "my-whole-line-deletion",
+            glyphMarginClassName: "bg-red-500",
+          },
+        });
+      }
+    });
+    return decorations;
+  };
+
+  // Update decorations when code or highlightChanges change
+  useEffect(() => {
+    if (editorRef.current) {
+      if (highlightChanges) {
+        const decorations = getLineDecorations();
+        decorationIdsRef.current = editorRef.current.deltaDecorations(
+          [],
+          decorations
+        );
+      } else {
+        // Clear all decorations
+        decorationIdsRef.current = editorRef.current.deltaDecorations(
+          decorationIdsRef.current,
+          []
+        );
+      }
+    }
+  }, [code, highlightChanges]);
 
   useEffect(() => {
     if ((mode === "preview" || mode === undefined) && code) {
@@ -98,6 +183,20 @@ export default function LiveCodeEditor({
             scrollBeyondLastLine: false,
             automaticLayout: true,
             readOnly,
+            lineNumbers: "on",
+            glyphMargin: true,
+            lineDecorationsWidth: 5,
+            lineNumbersMinChars: 3,
+          }}
+          onMount={(editor) => {
+            editorRef.current = editor;
+            if (highlightChanges) {
+              const decorations = getLineDecorations();
+              decorationIdsRef.current = editor.deltaDecorations(
+                [],
+                decorations
+              );
+            }
           }}
         />
       </div>

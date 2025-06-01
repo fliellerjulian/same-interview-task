@@ -22,8 +22,15 @@ export default function ChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("editor");
   const [code, setCode] = useState<string | undefined>(undefined);
+  const [previousCode, setPreviousCode] = useState<string | undefined>(
+    undefined
+  );
   const [isStreamingCode, setIsStreamingCode] = useState(false);
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<{
+    additions: string[];
+    deletions: string[];
+  } | null>(null);
   const autoSubmitRef = useRef(false);
 
   // Function to save code to database
@@ -102,9 +109,16 @@ export default function ChatPage() {
           }
         }
         if (codeBlock) {
-          setCode(codeBlock); // Ensure editor appears
+          const newCode = codeBlock;
+          if (code) {
+            const diff = computeDiff(code, newCode);
+            setPendingChanges(diff);
+            setPreviousCode(code);
+          }
+          setCode(newCode); // Ensure editor appears
           setIsStreamingCode(false); // End streaming state
-          await saveCodeToDatabase(codeBlock);
+          setActiveTab("editor"); // Switch to editor tab
+          await saveCodeToDatabase(newCode);
         }
       },
     });
@@ -259,6 +273,84 @@ export default function ChatPage() {
       </div>
     );
   }
+
+  // Function to compute diff between two strings
+  const computeDiff = (oldCode: string, newCode: string) => {
+    const oldLines = oldCode.split("\n");
+    const newLines = newCode.split("\n");
+    const additions: string[] = [];
+    const deletions: string[] = [];
+
+    let i = 0,
+      j = 0;
+    while (i < oldLines.length || j < newLines.length) {
+      if (i >= oldLines.length) {
+        additions.push(newLines[j]);
+        j++;
+      } else if (j >= newLines.length) {
+        deletions.push(oldLines[i]);
+        i++;
+      } else if (oldLines[i] === newLines[j]) {
+        i++;
+        j++;
+      } else {
+        // Check if it's an addition or deletion
+        if (j + 1 < newLines.length && oldLines[i] === newLines[j + 1]) {
+          additions.push(newLines[j]);
+          j++;
+        } else if (i + 1 < oldLines.length && oldLines[i + 1] === newLines[j]) {
+          deletions.push(oldLines[i]);
+          i++;
+        } else {
+          additions.push(newLines[j]);
+          deletions.push(oldLines[i]);
+          i++;
+          j++;
+        }
+      }
+    }
+
+    return { additions, deletions };
+  };
+
+  // Function to handle accepting changes
+  const handleAcceptChanges = () => {
+    if (code) {
+      setPreviousCode(code);
+      setPendingChanges(null);
+      saveCodeToDatabase(code);
+    }
+  };
+
+  // Function to handle rejecting changes
+  const handleRejectChanges = () => {
+    if (previousCode) {
+      setCode(previousCode);
+      setPendingChanges(null);
+    }
+  };
+
+  useEffect(() => {
+    // Find the latest assistant message with a code block if streaming
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === "assistant" && input !== "") {
+        for (const part of lastMsg.parts || []) {
+          if (part.type === "text" && part.text) {
+            const match = part.text.match(/```([\s\S]*?)```/);
+            if (match) {
+              setCode(match[1].replace(/^\n+|\n+$/g, ""));
+              setIsStreamingCode(true);
+              return;
+            }
+          }
+        }
+      } else {
+        setIsStreamingCode(false);
+      }
+    }
+  }, [messages, input]);
+
   if (!dbData) return <div>Loading...</div>;
 
   return (
@@ -291,22 +383,6 @@ export default function ChatPage() {
                     if (part.type === "text" && part.text) {
                       const bubbles = parseMarkdownToBubbles(part.text);
                       return bubbles.map((bubble, j) => {
-                        // Streaming code block logic
-                        if (bubble.type === "code" && isStreaming) {
-                          setTimeout(() => {
-                            setCode(bubble.content);
-                            setIsStreamingCode(true);
-                          }, 0);
-                        }
-                        if (bubble.type === "code" && !isStreaming) {
-                          setTimeout(() => {
-                            setIsStreamingCode(false);
-                            // Save the final code after streaming is complete
-                            if (bubble.content) {
-                              saveCodeToDatabase(bubble.content);
-                            }
-                          }, 0);
-                        }
                         return renderBubble(
                           bubble.type,
                           bubble.content,
@@ -349,17 +425,42 @@ export default function ChatPage() {
               </TabsList>
             </div>
             <TabsContent value="editor" className="flex-1 h-full p-0">
-              <LiveCodeEditor
-                mode="editor"
-                code={code}
-                setCode={(newCode) => {
-                  setCode(newCode);
-                  if (!isStreamingCode) {
-                    saveCodeToDatabase(newCode);
-                  }
-                }}
-                readOnly={isStreamingCode}
-              />
+              <div className="h-full flex flex-col">
+                {pendingChanges && (
+                  <div className="flex gap-2 p-2 bg-muted border-b">
+                    <button
+                      onClick={handleAcceptChanges}
+                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                    >
+                      Accept Changes
+                    </button>
+                    <button
+                      onClick={handleRejectChanges}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    >
+                      Reject Changes
+                    </button>
+                  </div>
+                )}
+                <div className="flex-1 relative">
+                  <LiveCodeEditor
+                    mode="editor"
+                    code={code}
+                    setCode={(newCode) => {
+                      if (code) {
+                        const diff = computeDiff(code, newCode);
+                        setPendingChanges(diff);
+                      }
+                      setCode(newCode);
+                      if (!isStreamingCode) {
+                        saveCodeToDatabase(newCode);
+                      }
+                    }}
+                    readOnly={isStreamingCode}
+                    highlightChanges={pendingChanges}
+                  />
+                </div>
+              </div>
             </TabsContent>
             <TabsContent value="preview" className="flex-1 h-full p-0">
               <LiveCodeEditor

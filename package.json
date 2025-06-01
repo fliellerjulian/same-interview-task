@@ -28,6 +28,7 @@
     "drizzle-orm": "^0.44.1",
     "hono": "^4.7.10",
     "lucide-react": "^0.511.0",
+    "monaco-editor": "^0.52.2",
     "next": "15.3.3",
     "openai": "^5.0.1",
     "pg": "^8.16.0",
