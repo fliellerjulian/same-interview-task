@@ -3,9 +3,13 @@ import LiveCodeEditor from "@/components/LiveCodeEditor";
 
 interface ExpandableCodeBlockProps {
   code: string;
+  onApply?: () => void;
 }
 
-const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({ code }) => {
+const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({
+  code,
+  onApply,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const lines = code.split("\n");
   const previewCode =
@@ -16,7 +20,15 @@ const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({ code }) => {
   const maxHeight = Math.min(600, lines.length * 24 + 32); // px, for expanded
 
   return (
-    <div className="my-2 rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-900 w-[90vw] max-w-xl mx-auto">
+    <div className="my-2 rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-900 w-[90vw] max-w-xl mx-auto relative">
+      {onApply && (
+        <button
+          onClick={onApply}
+          className="absolute top-2 right-2 px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors z-10"
+        >
+          Apply
+        </button>
+      )}
       <div style={{ height: expanded ? maxHeight : minHeight }}>
         <LiveCodeEditor
           mode="editor"

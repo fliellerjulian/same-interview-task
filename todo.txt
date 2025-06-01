@@ -4,8 +4,6 @@ BIG TODO:
 2. stop button
 
 MINOR:
-- await code block generation and display placeholder instead
-- apply code button for previous generations
 - hide canvas button for editor
 - function calls, such as retrieving the current time via AI SDK method
 - save user messages as well

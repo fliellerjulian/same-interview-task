@@ -226,7 +226,14 @@ export default function ChatPage() {
       // Always render code block for code bubbles in chat history
       return (
         <div key={key} className="max-w-[80%] my-1 self-start">
-          <ExpandableCodeBlock code={content} />
+          <ExpandableCodeBlock
+            code={content}
+            onApply={() => {
+              setCode(content);
+              setActiveTab("editor");
+              saveCodeToDatabase(content);
+            }}
+          />
         </div>
       );
     }
