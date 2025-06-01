@@ -125,25 +125,29 @@ export default function Home() {
     setUploading(false);
   }
 
-  function handleSubmit(e?: React.FormEvent) {
+  async function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!inputValue) return;
 
-    // Generate a unique ID for the chat
-    const chatId = uuidv4();
-
-    // Store the chat data in sessionStorage before navigation
-    sessionStorage.setItem(
-      `chat_${chatId}`,
-      JSON.stringify({
-        prompt: inputValue,
-        images: uploadedFiles.map((f) => f.url),
-        isNewProject: true,
-      })
-    );
-
-    // Navigate to the chat page with just the ID
-    router.push(`/chat/${chatId}`);
+    // Create a new project
+    const response = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: inputValue.slice(0, 50) + "...",
+        chat: {
+          messages: [
+            {
+              id: uuidv4(),
+              role: "user",
+              content: inputValue,
+            },
+          ],
+        },
+      }),
+    });
+    const data = await response.json();
+    router.push(`/chat/${data.id}`);
   }
 
   return (
