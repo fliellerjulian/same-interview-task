@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import ChatInput from "@/components/ChatInput";
+import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
 
 export default function ChatPage() {
   const params = useParams();
@@ -64,6 +66,97 @@ export default function ChatPage() {
     }
   }, [messages]);
 
+  // Helper to split markdown into bubbles (text, code, list item)
+  function parseMarkdownToBubbles(
+    markdown: string
+  ): { type: "text" | "code" | "li"; content: string }[] {
+    const bubbles: { type: "text" | "code" | "li"; content: string }[] = [];
+    const codeBlockRegex = /```([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = codeBlockRegex.exec(markdown)) !== null) {
+      if (match.index > lastIndex) {
+        const before = markdown.slice(lastIndex, match.index);
+        // Split before into lines and list items
+        before.split(/\n/).forEach((line) => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("- ") || trimmed.match(/^\d+\. /)) {
+            bubbles.push({
+              type: "li",
+              content: trimmed.replace(/^(- |\d+\. )/, ""),
+            });
+          } else if (trimmed) {
+            bubbles.push({ type: "text", content: trimmed });
+          }
+        });
+      }
+      bubbles.push({
+        type: "code",
+        content: match[1].replace(/^\n+|\n+$/g, ""),
+      });
+      lastIndex = match.index + match[0].length;
+    }
+    // Handle any remaining text after the last code block
+    if (lastIndex < markdown.length) {
+      markdown
+        .slice(lastIndex)
+        .split(/\n/)
+        .forEach((line) => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("- ") || trimmed.match(/^\d+\. /)) {
+            bubbles.push({
+              type: "li",
+              content: trimmed.replace(/^(- |\d+\. )/, ""),
+            });
+          } else if (trimmed) {
+            bubbles.push({ type: "text", content: trimmed });
+          }
+        });
+    }
+    return bubbles;
+  }
+
+  function renderBubble(
+    type: "text" | "code" | "li",
+    content: string,
+    isUser: boolean,
+    isStreaming: boolean,
+    key: string
+  ) {
+    if (type === "code") {
+      if (isStreaming) {
+        return (
+          <div key={key} className={`max-w-[80%] my-1 self-start`}>
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+        );
+      }
+      return (
+        <div
+          key={key}
+          className={`max-w-[80%] my-1 self-start bg-zinc-900 text-white rounded-2xl p-5 font-mono text-base overflow-x-auto shadow-md`}
+        >
+          <pre className="whitespace-pre-wrap break-words">
+            <code>{content}</code>
+          </pre>
+        </div>
+      );
+    }
+    // For normal text
+    return (
+      <div
+        key={key}
+        className={`max-w-[80%] my-1 px-4 py-3 rounded-2xl shadow-md whitespace-pre-wrap text-base break-words ${
+          isUser
+            ? "self-end bg-black text-white rounded-br-md"
+            : "self-start bg-white text-black border border-zinc-200 rounded-bl-md"
+        }`}
+      >
+        {content}
+      </div>
+    );
+  }
+
   if (!dbData) return <div>Loading...</div>;
 
   return (
@@ -73,23 +166,34 @@ export default function ChatPage() {
         className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1"
         style={{ maxHeight: "calc(90vh - 110px)" }}
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-md whitespace-pre-wrap text-base break-words ${
-              message.role === "user"
-                ? "self-end bg-black text-white rounded-br-md"
-                : "self-start bg-white text-black border border-zinc-200 rounded-bl-md"
-            }`}
-          >
-            {message.parts.map((part, i) => {
-              switch (part.type) {
-                case "text":
-                  return <div key={`${message.id}-${i}`}>{part.text}</div>;
-              }
-            })}
-          </div>
-        ))}
+        {messages.map((message, idx) => {
+          // Detect if this is the last message and is streaming (AI role)
+          const isStreaming =
+            message.role === "assistant" &&
+            idx === messages.length - 1 &&
+            input !== "";
+          return (
+            <React.Fragment key={message.id}>
+              {message.parts.map(
+                (part: { type: string; text?: string }, i: number) => {
+                  if (part.type === "text" && part.text) {
+                    const bubbles = parseMarkdownToBubbles(part.text);
+                    return bubbles.map((bubble, j) =>
+                      renderBubble(
+                        bubble.type,
+                        bubble.content,
+                        message.role === "user",
+                        isStreaming && bubble.type === "code",
+                        `${message.id}-${i}-${j}`
+                      )
+                    );
+                  }
+                  return null;
+                }
+              )}
+            </React.Fragment>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
       <div className="sticky bottom-0 bg-muted z-10 pt-2">

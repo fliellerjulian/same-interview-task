@@ -1,12 +1,15 @@
 
 
-TODO:
-1. chat markdown
+BIG TODO:
+1. minor chat markdown
 2. stop button
-2. Code in root browser displayed
-3. canvas
+2. Code in root browser displayed for components -> like claude artifacts
+3. Live render component in browser 
+4. dispaly changes in file live && re-render
 
-KEEP IN MIND:
+
+MINOR:
+- function calls, such as retrieving the current time via AI SDK method
 - instantly generate project on first message
 - modal to confirm delete project
 - autoscroll to bottom of chat
