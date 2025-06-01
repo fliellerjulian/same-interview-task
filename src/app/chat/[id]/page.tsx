@@ -1,7 +1,7 @@
 // In src/app/chat/[id]/page.tsx
 "use client";
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
@@ -12,6 +12,8 @@ export default function ChatPage() {
   const [dbData, setDbData] = useState<
     InferSelectModel<typeof Projects> | undefined
   >();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchChat = async () => {
@@ -55,11 +57,22 @@ export default function ChatPage() {
     }
   }, [dbData, setMessages]);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   if (!dbData) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
-      <div className="flex flex-col gap-4 mb-4">
+    <div className="flex flex-col w-full max-w-2xl h-[90vh] mx-auto stretch relative">
+      <div
+        ref={messagesContainerRef}
+        className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1"
+        style={{ maxHeight: "calc(90vh - 110px)" }}
+      >
         {messages.map((message) => (
           <div
             key={message.id}
@@ -77,13 +90,16 @@ export default function ChatPage() {
             })}
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
-      <ChatInput
-        value={input}
-        onChange={handleInputChange}
-        onSubmit={handleSubmit}
-        disabled={false}
-      />
+      <div className="sticky bottom-0 bg-muted z-10 pt-2">
+        <ChatInput
+          value={input}
+          onChange={handleInputChange}
+          onSubmit={handleSubmit}
+          disabled={false}
+        />
+      </div>
     </div>
   );
 }
