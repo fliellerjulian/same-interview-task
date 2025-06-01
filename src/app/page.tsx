@@ -14,10 +14,19 @@ import { UploadedFileChip } from "@/components/UploadedFileChip";
 import { useProjects } from "@/hooks/use-projects";
 
 const PLACEHOLDERS = [
-  "showcase my portfolio",
-  "make a farewell board",
-  "remix my brand website",
-  "design a restaurant website with a menu",
+  "create a gradient button with hover effect",
+  "create a product card with image hover zoom",
+  "create a search bar with autocomplete",
+  "create a pricing table with toggle",
+  "create a notification toast",
+  "create a dark mode toggle",
+  "create a progress bar with animation",
+  "create a modal with a close button",
+  "create a dropdown menu with hover effect",
+  "create a card with a shadow effect",
+  "create a button with a ripple effect",
+  "create a form with validation",
+  "create a table with pagination",
 ];
 
 export default function Home() {
@@ -150,10 +159,10 @@ export default function Home() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center px-8">
       <h1 className="text-6xl font-extrabold tracking-tight mb-2 text-center">
-        Make anything
+        Make any component
       </h1>
       <p className="text-xl text-muted-foreground mb-10 text-center">
-        Build fullstack web apps by prompting
+        Build any component by prompting
       </p>
       <form className="w-full flex justify-center" onSubmit={handleSubmit}>
         <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-10 py-8 shadow-lg gap-3 relative">

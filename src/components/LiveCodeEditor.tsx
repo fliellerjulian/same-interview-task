@@ -23,7 +23,14 @@ const generateHTML = (compiledCode: string) => `
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script>
-      ${compiledCode}
+      // Make React hooks available globally
+      const { useState, useEffect, useRef, useCallback, useMemo } = React;
+      const { createRoot } = ReactDOM;
+
+      // Wrap the code in an IIFE to avoid global scope pollution
+      (function() {
+        ${compiledCode}
+      })();
     </script>
   </body>
 </html>

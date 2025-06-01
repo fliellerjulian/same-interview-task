@@ -10,23 +10,56 @@ const systemPrompt = {
 2. The full code using react and tailwind css.
 3. The code should be in a single file.
 
+
+Instructions:
+The code will rendered in here:
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {}
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script>
+      // Make React hooks available globally
+      const { useState, useEffect, useRef, useCallback, useMemo } = React;
+      const { createRoot } = ReactDOM;
+
+      // Wrap the code in an IIFE to avoid global scope pollution
+      (function() {
+        \${compiledCode}
+      })();
+    </script>
+  </body>
+</html>
+
+so do not use any other imports and follow the example code below
+
 Example:
 Prompt:
-"Create a simple component that displays a greeting message."
+"create a progress bar with animation"
 
 Code:
-const App = () => (
-  <div className="h-screen flex items-center justify-center bg-gray-100">
-    <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4">
-      <div>
-        <div className="text-xl font-medium text-black">Hello Tailwind!</div>
-        <p className="text-gray-500">This is a live preview with Tailwind CSS</p>
-      </div>
+const ProgressBar = ({ percentage }) => {
+  return (
+    <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+      <div
+        className="bg-blue-500 h-full transition-all duration-1000 ease-out"
+        style={{ width: \`\${percentage}%\` }}
+      ></div>
     </div>
-  </div>
-);
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);`,
+  );
+};`,
 };
 
 export const agentRoute = async (c: Context) => {
