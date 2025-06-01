@@ -13,11 +13,23 @@ import { useProjects } from "@/hooks/use-projects";
 import { useRouter } from "next/navigation";
 import { HomeIcon, MessageSquare, Trash } from "lucide-react";
 import React, { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function AppSidebar() {
   const { projects, setProjects, loading } = useProjects();
   const router = useRouter();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   console.log(projects);
 
@@ -78,16 +90,43 @@ export function AppSidebar() {
                     <span className="truncate">{project.name}</span>
                   </SidebarMenuButton>
                   {hoveredId === project.id && (
-                    <button
-                      className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(project.id);
-                      }}
-                      aria-label="Delete project"
-                    >
-                      <Trash className="size-4 text-muted-foreground hover:text-black" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProjectToDelete(project.id);
+                          }}
+                          aria-label="Delete project"
+                        >
+                          <Trash className="size-4 text-muted-foreground hover:text-black" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently
+                            delete the project
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              if (projectToDelete) {
+                                handleDelete(projectToDelete);
+                                setProjectToDelete(null);
+                              }
+                            }}
+                            className="bg-black text-white hover:bg-zinc-800"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
               ))

@@ -10,7 +10,6 @@ BIG TODO:
 
 MINOR:
 - function calls, such as retrieving the current time via AI SDK method
-- modal to confirm delete project
 - save user messages as well
 - alerts on errors
 - images to projects
