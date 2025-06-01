@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LiveCodeEditor from "@/components/LiveCodeEditor";
 import React from "react";
 import { computeDiff } from "@/lib/utils";
+import ExpandableCodeBlock from "@/components/ExpandableCodeBlock";
 
 export default function ChatPage() {
   const params = useParams();
@@ -184,29 +185,20 @@ export default function ChatPage() {
     handleSubmit(e);
   };
 
-  // Helper to split markdown into bubbles (text, code, list item)
+  // Helper to split markdown into bubbles (text, code)
   function parseMarkdownToBubbles(
     markdown: string
-  ): { type: "text" | "code" | "li"; content: string }[] {
-    const bubbles: { type: "text" | "code" | "li"; content: string }[] = [];
+  ): { type: "text" | "code"; content: string }[] {
+    const bubbles: { type: "text" | "code"; content: string }[] = [];
     const codeBlockRegex = /```([\s\S]*?)```/g;
     let lastIndex = 0;
     let match;
     while ((match = codeBlockRegex.exec(markdown)) !== null) {
       if (match.index > lastIndex) {
         const before = markdown.slice(lastIndex, match.index);
-        // Split before into lines and list items
-        before.split(/\n/).forEach((line) => {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("- ") || trimmed.match(/^\d+\. /)) {
-            bubbles.push({
-              type: "li",
-              content: trimmed.replace(/^(- |\d+\. )/, ""),
-            });
-          } else if (trimmed) {
-            bubbles.push({ type: "text", content: trimmed });
-          }
-        });
+        if (before.trim()) {
+          bubbles.push({ type: "text", content: before.trim() });
+        }
       }
       bubbles.push({
         type: "code",
@@ -216,26 +208,16 @@ export default function ChatPage() {
     }
     // Handle any remaining text after the last code block
     if (lastIndex < markdown.length) {
-      markdown
-        .slice(lastIndex)
-        .split(/\n/)
-        .forEach((line) => {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("- ") || trimmed.match(/^\d+\. /)) {
-            bubbles.push({
-              type: "li",
-              content: trimmed.replace(/^(- |\d+\. )/, ""),
-            });
-          } else if (trimmed) {
-            bubbles.push({ type: "text", content: trimmed });
-          }
-        });
+      const after = markdown.slice(lastIndex);
+      if (after.trim()) {
+        bubbles.push({ type: "text", content: after.trim() });
+      }
     }
     return bubbles;
   }
 
   function renderBubble(
-    type: "text" | "code" | "li",
+    type: "text" | "code",
     content: string,
     isUser: boolean,
     isStreaming: boolean,
@@ -250,13 +232,8 @@ export default function ChatPage() {
         );
       }
       return (
-        <div
-          key={key}
-          className={`max-w-[80%] my-1 self-start bg-zinc-900 text-white rounded-2xl p-5 font-mono text-base overflow-x-auto shadow-md`}
-        >
-          <pre className="whitespace-pre-wrap break-words">
-            <code>{content}</code>
-          </pre>
+        <div key={key} className="max-w-[80%] my-1 self-start">
+          <ExpandableCodeBlock code={content} />
         </div>
       );
     }
