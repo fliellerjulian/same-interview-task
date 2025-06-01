@@ -7,6 +7,8 @@ import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import ChatInput from "@/components/ChatInput";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LiveCodeEditor from "@/components/LiveCodeEditor";
 import React from "react";
 
 export default function ChatPage() {
@@ -16,6 +18,8 @@ export default function ChatPage() {
   >();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState("editor");
+  const [code, setCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchChat = async () => {
@@ -160,49 +164,70 @@ export default function ChatPage() {
   if (!dbData) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col w-full max-w-2xl h-[90vh] mx-auto stretch relative">
-      <div
-        ref={messagesContainerRef}
-        className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1"
-        style={{ maxHeight: "calc(90vh - 110px)" }}
-      >
-        {messages.map((message, idx) => {
-          // Detect if this is the last message and is streaming (AI role)
-          const isStreaming =
-            message.role === "assistant" &&
-            idx === messages.length - 1 &&
-            input !== "";
-          return (
-            <React.Fragment key={message.id}>
-              {message.parts.map(
-                (part: { type: string; text?: string }, i: number) => {
-                  if (part.type === "text" && part.text) {
-                    const bubbles = parseMarkdownToBubbles(part.text);
-                    return bubbles.map((bubble, j) =>
-                      renderBubble(
-                        bubble.type,
-                        bubble.content,
-                        message.role === "user",
-                        isStreaming && bubble.type === "code",
-                        `${message.id}-${i}-${j}`
-                      )
-                    );
+    <div className="flex h-[90vh] w-full">
+      {/* Chat Section */}
+      <div className="w-1/2 flex flex-col border-r">
+        <div
+          ref={messagesContainerRef}
+          className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 p-4"
+          style={{ maxHeight: "calc(90vh - 110px)" }}
+        >
+          {messages.map((message, idx) => {
+            // Detect if this is the last message and is streaming (AI role)
+            const isStreaming =
+              message.role === "assistant" &&
+              idx === messages.length - 1 &&
+              input !== "";
+            return (
+              <React.Fragment key={message.id}>
+                {message.parts.map(
+                  (part: { type: string; text?: string }, i: number) => {
+                    if (part.type === "text" && part.text) {
+                      const bubbles = parseMarkdownToBubbles(part.text);
+                      return bubbles.map((bubble, j) =>
+                        renderBubble(
+                          bubble.type,
+                          bubble.content,
+                          message.role === "user",
+                          isStreaming && bubble.type === "code",
+                          `${message.id}-${i}-${j}`
+                        )
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
-              )}
-            </React.Fragment>
-          );
-        })}
-        <div ref={messagesEndRef} />
+                )}
+              </React.Fragment>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="sticky bottom-0 bg-muted z-10 p-4">
+          <ChatInput
+            value={input}
+            onChange={handleInputChange}
+            onSubmit={handleSubmit}
+            disabled={false}
+          />
+        </div>
       </div>
-      <div className="sticky bottom-0 bg-muted z-10 pt-2">
-        <ChatInput
-          value={input}
-          onChange={handleInputChange}
-          onSubmit={handleSubmit}
-          disabled={false}
-        />
+
+      {/* Code Editor Section */}
+      <div className="w-1/2 flex flex-col h-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+          <div className="border-b px-4">
+            <TabsList>
+              <TabsTrigger value="editor">Editor</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="editor" className="flex-1 h-full p-0">
+            <LiveCodeEditor mode="editor" code={code} setCode={setCode} />
+          </TabsContent>
+          <TabsContent value="preview" className="flex-1 h-full p-0">
+            <LiveCodeEditor mode="preview" code={code} setCode={setCode} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
