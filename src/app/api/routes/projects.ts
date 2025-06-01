@@ -16,6 +16,24 @@ export const getProjectsRoute = async (c: Context) => {
   }
 };
 
+export const getProjectRoute = async (c: Context) => {
+  try {
+    const id = c.req.param("id");
+    if (!id) {
+      return c.json({ error: "Project ID is required" }, 400);
+    }
+
+    const project = await db.query.Projects.findFirst({
+      where: eq(Projects.id, id),
+    });
+
+    return c.json(project);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return c.json({ error: "Failed to fetch projects" }, 500);
+  }
+};
+
 export const createProjectRoute = async (c: Context) => {
   try {
     const { name, chat } = await c.req.json();
@@ -57,5 +75,41 @@ export const deleteProjectRoute = async (c: Context) => {
   } catch (error) {
     console.error("Error deleting project:", error);
     return c.json({ error: "Failed to delete project" }, 500);
+  }
+};
+
+export const updateProjectRoute = async (c: Context) => {
+  try {
+    const id = c.req.param("id");
+    if (!id) {
+      return c.json({ error: "Project ID is required" }, 400);
+    }
+
+    // Get all fields to update from the request body
+    const updates = await c.req.json();
+
+    // Prevent updating the primary key
+    if ("id" in updates) {
+      delete updates.id;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return c.json({ error: "No fields provided to update" }, 400);
+    }
+
+    const [updatedProject] = await db
+      .update(Projects)
+      .set(updates)
+      .where(eq(Projects.id, id))
+      .returning();
+
+    if (!updatedProject) {
+      return c.json({ error: "Project not found" }, 404);
+    }
+
+    return c.json(updatedProject);
+  } catch (error) {
+    console.error("Error updating project:", error);
+    return c.json({ error: "Failed to update project" }, 500);
   }
 };

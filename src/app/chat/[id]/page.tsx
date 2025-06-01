@@ -15,7 +15,7 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const response = await fetch(`/api/chat/${params.id}`);
+        const response = await fetch(`/api/project/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setDbData(data);
@@ -35,10 +35,12 @@ export default function ChatPage() {
       onFinish: async (message) => {
         // Update messages in database after each message
         try {
-          await fetch(`/api/projects/${params.id}`, {
+          await fetch(`/api/project/${params.id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: [...messages, message] }),
+            body: JSON.stringify({
+              chat: { messages: [...messages, message] },
+            }),
           });
         } catch (error) {
           console.error("Error updating chat:", error);
@@ -53,7 +55,7 @@ export default function ChatPage() {
   }, [dbData, setMessages]);
 
   if (!dbData) return <div>Loading...</div>;
-  console.log(dbData);
+
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
       {messages.map((message) => (
