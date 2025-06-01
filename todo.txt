@@ -3,14 +3,13 @@
 BIG TODO:
 1. minor chat markdown
 2. stop button
-2. Code in root browser displayed for components -> like claude artifacts
-3. Live render component in browser 
+3. Code in root browser displayed for components -> like claude artifacts
 4. dispaly changes in file live && re-render
+5. open code on previous projects
 
 
 MINOR:
 - function calls, such as retrieving the current time via AI SDK method
-- instantly generate project on first message
 - modal to confirm delete project
 - autoscroll to bottom of chat
 - save user messages as well
@@ -19,17 +18,3 @@ MINOR:
 
 
 
-const defaultCode = `
-const App = () => (
-  <div className="h-screen flex items-center justify-center bg-gray-100">
-    <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4">
-      <div>
-        <div className="text-xl font-medium text-black">Hello Tailwind!</div>
-        <p className="text-gray-500">This is a live preview with Tailwind CSS</p>
-      </div>
-    </div>
-  </div>
-);
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-`;

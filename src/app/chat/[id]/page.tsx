@@ -26,6 +26,24 @@ export default function ChatPage() {
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const autoSubmitRef = useRef(false);
 
+  // Function to save code to database
+  const saveCodeToDatabase = async (newCode: string) => {
+    try {
+      const response = await fetch(`/api/project/${params.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: newCode }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save code");
+      }
+      // Don't update dbData here to avoid re-renders
+      // The code state is already updated locally
+    } catch (error) {
+      console.error("Error saving code:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchChat = async () => {
       try {
@@ -33,6 +51,11 @@ export default function ChatPage() {
         if (response.ok) {
           const data = await response.json();
           setDbData(data);
+          // Set code from database if it exists and we don't have code yet
+          if (data.code && !code) {
+            setCode(data.code);
+            setActiveTab("editor");
+          }
         }
       } catch (error) {
         console.error("Error fetching chat:", error);
@@ -40,7 +63,7 @@ export default function ChatPage() {
     };
 
     fetchChat();
-  }, [params.id]);
+  }, [params.id, code]); // Only refetch when id changes or code is null
 
   const { messages, input, handleInputChange, handleSubmit, setMessages } =
     useChat({
@@ -49,13 +72,18 @@ export default function ChatPage() {
       onFinish: async (message) => {
         // Update messages in database after each message
         try {
-          await fetch(`/api/project/${params.id}`, {
+          const response = await fetch(`/api/project/${params.id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat: { messages: [...messages, message] },
             }),
           });
+          if (!response.ok) {
+            throw new Error("Failed to update chat");
+          }
+          const updatedData = await response.json();
+          setDbData(updatedData);
         } catch (error) {
           console.error("Error updating chat:", error);
         }
@@ -75,15 +103,8 @@ export default function ChatPage() {
         }
         if (codeBlock) {
           setCode(codeBlock); // Ensure editor appears
-          try {
-            await fetch(`/api/project/${params.id}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code: codeBlock }),
-            });
-          } catch (error) {
-            console.error("Error saving code block:", error);
-          }
+          setIsStreamingCode(false); // End streaming state
+          await saveCodeToDatabase(codeBlock);
         }
       },
     });
@@ -102,7 +123,9 @@ export default function ChatPage() {
       !input &&
       !autoSubmitRef.current
     ) {
-      handleInputChange({ target: { value: initialPrompt } } as any);
+      handleInputChange({
+        target: { value: initialPrompt },
+      } as React.ChangeEvent<HTMLInputElement>);
       setShouldAutoSubmit(true);
       autoSubmitRef.current = true;
     }
@@ -236,7 +259,6 @@ export default function ChatPage() {
       </div>
     );
   }
-
   if (!dbData) return <div>Loading...</div>;
 
   return (
@@ -279,6 +301,10 @@ export default function ChatPage() {
                         if (bubble.type === "code" && !isStreaming) {
                           setTimeout(() => {
                             setIsStreamingCode(false);
+                            // Save the final code after streaming is complete
+                            if (bubble.content) {
+                              saveCodeToDatabase(bubble.content);
+                            }
                           }, 0);
                         }
                         return renderBubble(
@@ -326,7 +352,12 @@ export default function ChatPage() {
               <LiveCodeEditor
                 mode="editor"
                 code={code}
-                setCode={setCode}
+                setCode={(newCode) => {
+                  setCode(newCode);
+                  if (!isStreamingCode) {
+                    saveCodeToDatabase(newCode);
+                  }
+                }}
                 readOnly={isStreamingCode}
               />
             </TabsContent>
