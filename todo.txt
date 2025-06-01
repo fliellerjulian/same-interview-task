@@ -3,8 +3,6 @@
 BIG TODO:
 1. minor chat markdown
 2. stop button
-3. Code in root browser displayed for components -> like claude artifacts
-4. dispaly changes in file live && re-render
 
 MINOR:
 - apply code button for previous generations

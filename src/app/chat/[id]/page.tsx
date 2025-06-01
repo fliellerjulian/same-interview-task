@@ -354,7 +354,7 @@ export default function ChatPage() {
   if (!dbData) return <div>Loading...</div>;
 
   return (
-    <div className="flex h-[90vh] w-full">
+    <div className="flex h-[100vh] w-full">
       {/* Chat Section */}
       <div
         className={`
@@ -400,7 +400,7 @@ export default function ChatPage() {
           })}
           <div ref={messagesEndRef} />
         </div>
-        <div className="sticky bottom-0 bg-muted z-10 p-4">
+        <div className="sticky bottom-0 z-10 p-4">
           <ChatInput
             value={input}
             onChange={handleInputChange}
