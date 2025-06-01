@@ -99,7 +99,7 @@ export const updateProjectRoute = async (c: Context) => {
 
     const [updatedProject] = await db
       .update(Projects)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(Projects.id, id))
       .returning();
 
