@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useProjects } from "@/hooks/use-projects";
 import { useRouter } from "next/navigation";
-import { MessageSquare } from "lucide-react";
+import { HomeIcon, MessageSquare } from "lucide-react";
 
 export function AppSidebar() {
   const { projects, loading } = useProjects();
@@ -23,6 +23,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center justify-between px-4">
+          <HomeIcon className="size-4" onClick={() => router.push("/")} />
           <h2 className="text-lg font-semibold">Projects</h2>
           <SidebarTrigger />
         </div>
