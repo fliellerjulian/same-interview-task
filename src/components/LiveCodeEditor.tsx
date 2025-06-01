@@ -29,40 +29,26 @@ const generateHTML = (compiledCode: string) => `
 </html>
 `;
 
-const defaultCode = `
-const App = () => (
-  <div className="h-screen flex items-center justify-center bg-gray-100">
-    <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4">
-      <div>
-        <div className="text-xl font-medium text-black">Hello Tailwind!</div>
-        <p className="text-gray-500">This is a live preview with Tailwind CSS</p>
-      </div>
-    </div>
-  </div>
-);
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-`;
-
 type LiveCodeEditorProps = {
   mode?: "editor" | "preview";
   code?: string;
   setCode?: (code: string) => void;
+  readOnly?: boolean;
 };
 
 export default function LiveCodeEditor({
   mode,
   code: codeProp,
   setCode: setCodeProp,
+  readOnly = false,
 }: LiveCodeEditorProps) {
-  const [internalCode, setInternalCode] = useState(codeProp ?? defaultCode);
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const code = codeProp !== undefined ? codeProp : internalCode;
-  const setCode = setCodeProp !== undefined ? setCodeProp : setInternalCode;
+  const code = codeProp;
+  const setCode = setCodeProp;
 
   useEffect(() => {
-    if (mode === "preview" || mode === undefined) {
+    if ((mode === "preview" || mode === undefined) && code) {
       try {
         const compiled = Babel.transform(code, {
           presets: ["react"],
@@ -82,6 +68,8 @@ export default function LiveCodeEditor({
     }
   }, [code, mode]);
 
+  if (!code) return null;
+
   if (mode === "editor") {
     return (
       <div className="h-full w-full">
@@ -90,13 +78,14 @@ export default function LiveCodeEditor({
           defaultLanguage="javascript"
           value={code}
           theme="vs-dark"
-          onChange={(value) => setCode(value ?? "")}
+          onChange={(value) => setCode && setCode(value ?? "")}
           options={{
             fontSize: 14,
             minimap: { enabled: false },
             wordWrap: "on",
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            readOnly,
           }}
         />
       </div>
@@ -121,44 +110,5 @@ export default function LiveCodeEditor({
     );
   }
 
-  // Default: show both (for demo page)
-  return (
-    <div className="flex flex-col h-[600px] w-full rounded-lg overflow-hidden">
-      <div className="flex h-full">
-        <div className="w-1/2 h-full flex flex-col">
-          <div className="flex-1 overflow-auto bg-gray-50">
-            <Editor
-              height="100%"
-              defaultLanguage="javascript"
-              value={code}
-              theme="vs-dark"
-              onChange={(value) => setCode(value ?? "")}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                wordWrap: "on",
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-              }}
-            />
-          </div>
-        </div>
-        <div className="w-1/2 h-full flex flex-col">
-          <div className="flex-1 relative">
-            {error ? (
-              <div className="absolute inset-0 bg-red-50 p-4 overflow-auto">
-                <pre className="text-red-600 text-sm">{error}</pre>
-              </div>
-            ) : (
-              <iframe
-                ref={iframeRef}
-                className="w-full h-full border-0"
-                sandbox="allow-scripts"
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

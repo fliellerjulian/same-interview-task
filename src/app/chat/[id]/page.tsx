@@ -2,7 +2,7 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Projects } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import ChatInput from "@/components/ChatInput";
@@ -13,6 +13,8 @@ import React from "react";
 
 export default function ChatPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get("prompt");
   const [dbData, setDbData] = useState<
     InferSelectModel<typeof Projects> | undefined
   >();
@@ -20,6 +22,9 @@ export default function ChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("editor");
   const [code, setCode] = useState<string | undefined>(undefined);
+  const [isStreamingCode, setIsStreamingCode] = useState(false);
+  const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
+  const autoSubmitRef = useRef(false);
 
   useEffect(() => {
     const fetchChat = async () => {
@@ -54,6 +59,32 @@ export default function ChatPage() {
         } catch (error) {
           console.error("Error updating chat:", error);
         }
+        // --- Save code block to DB if present ---
+        // Try to extract code block from message
+        let codeBlock = "";
+        if (message.parts) {
+          for (const part of message.parts) {
+            if (part.type === "text" && part.text) {
+              const match = part.text.match(/```([\s\S]*?)```/);
+              if (match) {
+                codeBlock = match[1].replace(/^\n+|\n+$/g, "");
+                break;
+              }
+            }
+          }
+        }
+        if (codeBlock) {
+          setCode(codeBlock); // Ensure editor appears
+          try {
+            await fetch(`/api/project/${params.id}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: codeBlock }),
+            });
+          } catch (error) {
+            console.error("Error saving code block:", error);
+          }
+        }
       },
     });
 
@@ -63,12 +94,57 @@ export default function ChatPage() {
     }
   }, [dbData, setMessages]);
 
+  // Auto-submit prompt from query string if present, only if there are no messages
+  useEffect(() => {
+    if (
+      initialPrompt &&
+      (!dbData?.chat?.messages || dbData.chat.messages.length === 0) &&
+      !input &&
+      !autoSubmitRef.current
+    ) {
+      handleInputChange({ target: { value: initialPrompt } } as any);
+      setShouldAutoSubmit(true);
+      autoSubmitRef.current = true;
+    }
+  }, [initialPrompt, dbData, input, handleInputChange]);
+
+  useEffect(() => {
+    if (shouldAutoSubmit && input === initialPrompt) {
+      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+      setShouldAutoSubmit(false);
+    }
+  }, [shouldAutoSubmit, input, initialPrompt, handleSubmit]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // Save user message to DB on submit
+  const handleUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    // Save user message to DB
+    try {
+      await fetch(`/api/project/${params.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat: {
+            messages: [
+              ...messages,
+              { id: Date.now().toString(), role: "user", content: input },
+            ],
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error saving user message:", error);
+    }
+    handleSubmit(e);
+  };
 
   // Helper to split markdown into bubbles (text, code, list item)
   function parseMarkdownToBubbles(
@@ -166,14 +242,22 @@ export default function ChatPage() {
   return (
     <div className="flex h-[90vh] w-full">
       {/* Chat Section */}
-      <div className="w-1/2 flex flex-col border-r">
+      <div
+        className={`
+          ${
+            code
+              ? "w-1/2 flex flex-col border-r"
+              : "w-full max-w-2xl mx-auto flex flex-col"
+          }
+          flex flex-1 min-h-0
+        `}
+      >
         <div
           ref={messagesContainerRef}
-          className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 p-4"
+          className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 min-h-0 p-4"
           style={{ maxHeight: "calc(90vh - 110px)" }}
         >
           {messages.map((message, idx) => {
-            // Detect if this is the last message and is streaming (AI role)
             const isStreaming =
               message.role === "assistant" &&
               idx === messages.length - 1 &&
@@ -184,15 +268,27 @@ export default function ChatPage() {
                   (part: { type: string; text?: string }, i: number) => {
                     if (part.type === "text" && part.text) {
                       const bubbles = parseMarkdownToBubbles(part.text);
-                      return bubbles.map((bubble, j) =>
-                        renderBubble(
+                      return bubbles.map((bubble, j) => {
+                        // Streaming code block logic
+                        if (bubble.type === "code" && isStreaming) {
+                          setTimeout(() => {
+                            setCode(bubble.content);
+                            setIsStreamingCode(true);
+                          }, 0);
+                        }
+                        if (bubble.type === "code" && !isStreaming) {
+                          setTimeout(() => {
+                            setIsStreamingCode(false);
+                          }, 0);
+                        }
+                        return renderBubble(
                           bubble.type,
                           bubble.content,
                           message.role === "user",
                           isStreaming && bubble.type === "code",
                           `${message.id}-${i}-${j}`
-                        )
-                      );
+                        );
+                      });
                     }
                     return null;
                   }
@@ -206,29 +302,45 @@ export default function ChatPage() {
           <ChatInput
             value={input}
             onChange={handleInputChange}
-            onSubmit={handleSubmit}
+            onSubmit={handleUserSubmit}
             disabled={false}
           />
         </div>
       </div>
 
       {/* Code Editor Section */}
-      <div className="w-1/2 flex flex-col h-full">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <div className="border-b px-4">
-            <TabsList>
-              <TabsTrigger value="editor">Editor</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="editor" className="flex-1 h-full p-0">
-            <LiveCodeEditor mode="editor" code={code} setCode={setCode} />
-          </TabsContent>
-          <TabsContent value="preview" className="flex-1 h-full p-0">
-            <LiveCodeEditor mode="preview" code={code} setCode={setCode} />
-          </TabsContent>
-        </Tabs>
-      </div>
+      {code && (
+        <div className="w-1/2 flex flex-col h-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="h-full"
+          >
+            <div className="border-b px-4">
+              <TabsList>
+                <TabsTrigger value="editor">Editor</TabsTrigger>
+                <TabsTrigger value="preview">Preview</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="editor" className="flex-1 h-full p-0">
+              <LiveCodeEditor
+                mode="editor"
+                code={code}
+                setCode={setCode}
+                readOnly={isStreamingCode}
+              />
+            </TabsContent>
+            <TabsContent value="preview" className="flex-1 h-full p-0">
+              <LiveCodeEditor
+                mode="preview"
+                code={code}
+                setCode={setCode}
+                readOnly={isStreamingCode}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
     </div>
   );
 }

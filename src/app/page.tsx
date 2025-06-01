@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
-import { v4 as uuidv4 } from "uuid";
 import { useProjects } from "@/hooks/use-projects";
 
 const PLACEHOLDERS = [
@@ -137,21 +136,12 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: inputValue.slice(0, 50) + "...",
-          chat: {
-            messages: [
-              {
-                id: uuidv4(),
-                role: "user",
-                content: inputValue,
-              },
-            ],
-          },
         }),
       });
       const data = await response.json();
       setProjects([...projects, data]);
       setInputValue("");
-      router.push(`/chat/${data.id}`);
+      router.push(`/chat/${data.id}?prompt=${encodeURIComponent(inputValue)}`);
     } catch (error) {
       console.error("Error creating project:", error);
     }
