@@ -7,5 +7,4 @@
 
 - alerts on errors
 - images to projects
-- project hook update on new creation
 - delete projects function

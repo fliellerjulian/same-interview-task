@@ -7,6 +7,7 @@ import {
   SidebarGroup,
   SidebarHeader,
   SidebarMenuButton,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useProjects } from "@/hooks/use-projects";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,10 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <h2 className="px-4 text-lg font-semibold">Projects</h2>
+        <div className="flex items-center justify-between px-4">
+          <h2 className="text-lg font-semibold">Projects</h2>
+          <SidebarTrigger />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
