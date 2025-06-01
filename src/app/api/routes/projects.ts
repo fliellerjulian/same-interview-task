@@ -1,6 +1,7 @@
 import { Context } from "hono";
 import db from "@/db";
 import { Projects } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export const getProjectsRoute = async (c: Context) => {
   try {
@@ -35,5 +36,26 @@ export const createProjectRoute = async (c: Context) => {
   } catch (error) {
     console.error("Error creating project:", error);
     return c.json({ error: "Failed to create project" }, 500);
+  }
+};
+
+export const deleteProjectRoute = async (c: Context) => {
+  try {
+    const id = c.req.param("id");
+    if (!id) {
+      return c.json({ error: "Project ID is required" }, 400);
+    }
+
+    const deleted = await db
+      .delete(Projects)
+      .where(eq(Projects.id, id))
+      .returning();
+    if (deleted.length === 0) {
+      return c.json({ error: "Project not found" }, 404);
+    }
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    return c.json({ error: "Failed to delete project" }, 500);
   }
 };

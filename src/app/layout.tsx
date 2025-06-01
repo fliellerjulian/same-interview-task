@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SidebarProvider defaultOpen={false}>
+        <SidebarProvider defaultOpen={true}>
           <AppSidebar />
           <main className="relative min-h-screen w-full flex">
             <SidebarTriggerWrapper className="absolute top-2 left-4" />
