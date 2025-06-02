@@ -20,7 +20,7 @@ const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({
   const maxHeight = Math.min(600, lines.length * 24 + 32); // px, for expanded
 
   return (
-    <div className="my-2 rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-900 w-[90vw] max-w-xl mx-auto relative">
+    <div className="my-2 rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-900 w-[100vw] max-w-xl mx-auto relative">
       {onApply && (
         <button
           onClick={onApply}

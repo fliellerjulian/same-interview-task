@@ -220,7 +220,7 @@ export default function ChatPage() {
     if (type === "code") {
       // Always render code block for code bubbles in chat history
       return (
-        <div key={key} className="max-w-[80%] my-1 self-start">
+        <div key={key} className="max-w-[100%] my-1 self-start">
           <ExpandableCodeBlock
             code={content}
             onApply={() => {
@@ -236,7 +236,7 @@ export default function ChatPage() {
     return (
       <div
         key={key}
-        className={`max-w-[80%] my-1 px-4 py-3 rounded-2xl shadow-md whitespace-pre-wrap text-base break-words ${
+        className={`max-w-[100%] my-1 px-4 py-3 rounded-2xl shadow-md whitespace-pre-wrap text-base break-words ${
           isUser
             ? "self-end bg-black text-white rounded-br-md"
             : "self-start bg-white text-black border border-zinc-200 rounded-bl-md"

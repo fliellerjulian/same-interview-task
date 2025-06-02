@@ -17,9 +17,9 @@ import { AlertCircle } from "lucide-react";
 
 const PLACEHOLDERS = [
   "create a gradient button with hover effect",
+  "create a pricing table with toggle",
   "create a product card with image hover zoom",
   "create a search bar with autocomplete",
-  "create a pricing table with toggle",
   "create a notification toast",
   "create a dark mode toggle",
   "create a progress bar with animation",
