@@ -51,8 +51,22 @@ export const useProjectApi = (projectId: string) => {
     }
   };
 
+  const deleteProject = async (id: string) => {
+    try {
+      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Failed to delete project");
+      }
+      return true;
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      throw error;
+    }
+  };
+
   return {
     updateChat,
     saveCode,
+    deleteProject,
   };
 };

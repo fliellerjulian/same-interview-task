@@ -10,6 +10,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useProjects } from "@/hooks/use-projects";
+import { useProjectApi } from "@/hooks/useProjectApi";
 import { useRouter } from "next/navigation";
 import { HomeIcon, MessageSquare, Trash } from "lucide-react";
 import React, { useState } from "react";
@@ -30,20 +31,15 @@ export function AppSidebar() {
   const router = useRouter();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-
-  console.log(projects);
+  const { deleteProject } = useProjectApi("");
 
   const handleDelete = async (id: string) => {
     // Optimistically update UI
     setProjects(projects.filter((p) => p.id !== id));
     try {
-      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        // Revert if failed
-        setProjects(await (await fetch("/api/projects")).json());
-        alert("Failed to delete project");
-      }
+      await deleteProject(id);
     } catch {
+      // Revert if failed
       setProjects(await (await fetch("/api/projects")).json());
       alert("Failed to delete project");
     }
