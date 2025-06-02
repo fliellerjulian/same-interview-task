@@ -14,6 +14,7 @@ import ExpandableCodeBlock from "@/components/ExpandableCodeBlock";
 import { useProjectApi } from "@/hooks/useProjectApi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
 
 export default function ChatPage() {
   const params = useParams();
@@ -224,7 +225,7 @@ export default function ChatPage() {
         </div>
       );
     }
-    // For normal text
+    // For normal text, render markdown
     return (
       <div
         key={key}
@@ -234,7 +235,7 @@ export default function ChatPage() {
             : "self-start bg-white text-black border border-zinc-200 rounded-bl-md"
         }`}
       >
-        {content}
+        <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     );
   }
