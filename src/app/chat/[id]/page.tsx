@@ -12,6 +12,8 @@ import React from "react";
 import { computeDiff } from "@/lib/utils";
 import ExpandableCodeBlock from "@/components/ExpandableCodeBlock";
 import { useProjectApi } from "@/hooks/useProjectApi";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ChatPage() {
   const params = useParams();
@@ -34,6 +36,7 @@ export default function ChatPage() {
     additions: string[];
     deletions: string[];
   } | null>(null);
+  const [isEditorVisible, setIsEditorVisible] = useState(true);
 
   const { updateChat, saveCode } = useProjectApi(params.id as string);
 
@@ -238,124 +241,219 @@ export default function ChatPage() {
   if (!dbData) return <div>Loading...</div>;
 
   return (
-    <div className="flex h-[100vh] w-full">
-      {/* Chat Section */}
-      <div
-        className={`
-          ${
-            code
-              ? "w-1/2 flex flex-col border-r"
-              : "w-full max-w-2xl mx-auto flex flex-col"
-          }
-          flex flex-1 min-h-0
-        `}
-      >
-        <div
-          ref={messagesContainerRef}
-          className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 min-h-0 p-4"
-          style={{ maxHeight: "calc(90vh - 110px)" }}
+    <div className="flex flex-col h-[100vh] w-full">
+      {code ? (
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex flex-col flex-1"
         >
-          {messages.map((message, idx) => {
-            const isStreaming =
-              message.role === "assistant" &&
-              idx === messages.length - 1 &&
-              input !== "";
-            return (
-              <React.Fragment key={message.id}>
-                {message.parts.map(
-                  (part: { type: string; text?: string }, i: number) => {
-                    if (part.type === "text" && part.text) {
-                      const bubbles = parseMarkdownToBubbles(part.text);
-                      return bubbles.map((bubble, j) => {
-                        return renderBubble(
-                          bubble.type,
-                          bubble.content,
-                          message.role === "user",
-                          isStreaming && bubble.type === "code",
-                          `${message.id}-${i}-${j}`
-                        );
-                      });
-                    }
-                    return null;
-                  }
-                )}
-              </React.Fragment>
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="sticky bottom-0 z-10 p-4">
-          <ChatInput
-            value={input}
-            onChange={handleInputChange}
-            onSubmit={handleUserSubmit}
-            disabled={false}
-          />
-        </div>
-      </div>
-
-      {/* Code Editor Section */}
-      {code && (
-        <div className="w-1/2 flex flex-col h-full">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="h-full"
+          {/* Topbar */}
+          <div
+            className={`flex items-center h-14 px-6 border-b bg-white/80 backdrop-blur sticky top-0 z-30 w-full ${
+              code && isEditorVisible ? "" : "justify-between"
+            }`}
           >
-            <div className="border-b px-4">
-              <TabsList>
-                <TabsTrigger value="editor">Editor</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-              </TabsList>
+            {/* Left: Chat title (always) */}
+            <div
+              className={
+                code && isEditorVisible ? "w-1/2 flex items-center" : ""
+              }
+            >
+              <span className="font-semibold text-lg">Chat</span>
             </div>
-            <TabsContent value="editor" className="flex-1 h-full p-0">
-              <div className="h-full flex flex-col">
-                {pendingChanges && (
-                  <div className="flex gap-2 p-2 bg-muted border-b">
-                    <button
-                      onClick={handleAcceptChanges}
-                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                    >
-                      Accept Changes
-                    </button>
-                    <button
-                      onClick={handleRejectChanges}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                    >
-                      Reject Changes
-                    </button>
-                  </div>
-                )}
-                <div className="flex-1 relative">
-                  <LiveCodeEditor
-                    mode="editor"
-                    code={code}
-                    setCode={(newCode) => {
-                      if (code) {
-                        const diff = computeDiff(code, newCode);
-                        setPendingChanges(diff);
-                      }
-                      setCode(newCode);
-                      if (!isStreamingCode) {
-                        saveCode(newCode);
-                      }
-                    }}
-                    readOnly={isStreamingCode}
-                    highlightChanges={pendingChanges}
-                  />
+            {/* Right: Tabs + toggle (if editor open), or just toggle (if hidden) */}
+            {isEditorVisible ? (
+              <div className="w-1/2 flex items-center justify-between">
+                <div className="flex-1 flex items-center">
+                  <TabsList>
+                    <TabsTrigger value="editor">Editor</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                  </TabsList>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditorVisible(false)}
+                  aria-label="Hide Code Editor"
+                  className="ml-2"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
               </div>
-            </TabsContent>
-            <TabsContent value="preview" className="flex-1 h-full p-0">
-              <LiveCodeEditor
-                mode="preview"
-                code={code}
-                setCode={setCode}
-                readOnly={isStreamingCode}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditorVisible(true)}
+                aria-label="Show Code Editor"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-1 w-full">
+            {/* Chat Section */}
+            <div
+              className={`
+                ${
+                  isEditorVisible
+                    ? "w-1/2 flex flex-col border-r"
+                    : "w-full max-w-2xl mx-auto flex flex-col"
+                }
+                flex flex-1 min-h-0
+              `}
+            >
+              <div
+                ref={messagesContainerRef}
+                className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 min-h-0 p-4"
+                style={{ maxHeight: "calc(90vh - 110px)" }}
+              >
+                {messages.map((message, idx) => {
+                  const isStreaming =
+                    message.role === "assistant" &&
+                    idx === messages.length - 1 &&
+                    input !== "";
+                  return (
+                    <React.Fragment key={message.id}>
+                      {message.parts.map(
+                        (part: { type: string; text?: string }, i: number) => {
+                          if (part.type === "text" && part.text) {
+                            const bubbles = parseMarkdownToBubbles(part.text);
+                            return bubbles.map((bubble, j) => {
+                              return renderBubble(
+                                bubble.type,
+                                bubble.content,
+                                message.role === "user",
+                                isStreaming && bubble.type === "code",
+                                `${message.id}-${i}-${j}`
+                              );
+                            });
+                          }
+                          return null;
+                        }
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+              <div className="sticky bottom-0 z-10 p-4">
+                <ChatInput
+                  value={input}
+                  onChange={handleInputChange}
+                  onSubmit={handleUserSubmit}
+                  disabled={false}
+                />
+              </div>
+            </div>
+
+            {/* Code Editor Section */}
+            {isEditorVisible && (
+              <div className="w-1/2 flex flex-col h-full">
+                <TabsContent value="editor" className="flex-1 h-full p-0">
+                  <div className="h-full flex flex-col">
+                    {pendingChanges && (
+                      <div className="flex gap-2 p-2 bg-muted border-b">
+                        <button
+                          onClick={handleAcceptChanges}
+                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                        >
+                          Accept Changes
+                        </button>
+                        <button
+                          onClick={handleRejectChanges}
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        >
+                          Reject Changes
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex-1 relative">
+                      <LiveCodeEditor
+                        mode="editor"
+                        code={code}
+                        setCode={(newCode) => {
+                          if (code) {
+                            const diff = computeDiff(code, newCode);
+                            setPendingChanges(diff);
+                          }
+                          setCode(newCode);
+                          if (!isStreamingCode) {
+                            saveCode(newCode);
+                          }
+                        }}
+                        readOnly={isStreamingCode}
+                        highlightChanges={pendingChanges}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="preview" className="flex-1 h-full p-0">
+                  <LiveCodeEditor
+                    mode="preview"
+                    code={code}
+                    setCode={setCode}
+                    readOnly={isStreamingCode}
+                  />
+                </TabsContent>
+              </div>
+            )}
+          </div>
+        </Tabs>
+      ) : (
+        // If no code, fallback to just chat and topbar
+        <>
+          <div className="flex items-center justify-between h-14 px-6 border-b bg-white/80 backdrop-blur sticky top-0 z-30">
+            <span className="font-semibold text-lg">Chat</span>
+          </div>
+          <div className="flex flex-1 w-full">
+            <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 min-h-0">
+              <div
+                ref={messagesContainerRef}
+                className="flex flex-col gap-4 mb-4 overflow-y-auto pr-2 flex-1 min-h-0 p-4"
+                style={{ maxHeight: "calc(90vh - 110px)" }}
+              >
+                {messages.map((message, idx) => {
+                  const isStreaming =
+                    message.role === "assistant" &&
+                    idx === messages.length - 1 &&
+                    input !== "";
+                  return (
+                    <React.Fragment key={message.id}>
+                      {message.parts.map(
+                        (part: { type: string; text?: string }, i: number) => {
+                          if (part.type === "text" && part.text) {
+                            const bubbles = parseMarkdownToBubbles(part.text);
+                            return bubbles.map((bubble, j) => {
+                              return renderBubble(
+                                bubble.type,
+                                bubble.content,
+                                message.role === "user",
+                                isStreaming && bubble.type === "code",
+                                `${message.id}-${i}-${j}`
+                              );
+                            });
+                          }
+                          return null;
+                        }
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+              <div className="sticky bottom-0 z-10 p-4">
+                <ChatInput
+                  value={input}
+                  onChange={handleInputChange}
+                  onSubmit={handleUserSubmit}
+                  disabled={false}
+                />
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
