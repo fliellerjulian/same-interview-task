@@ -11,6 +11,7 @@ import LiveCodeEditor from "@/components/LiveCodeEditor";
 import React from "react";
 import { computeDiff } from "@/lib/utils";
 import ExpandableCodeBlock from "@/components/ExpandableCodeBlock";
+import { useProjectApi } from "@/hooks/useProjectApi";
 
 export default function ChatPage() {
   const params = useParams();
@@ -34,23 +35,7 @@ export default function ChatPage() {
   } | null>(null);
   const autoSubmitRef = useRef(false);
 
-  // Function to save code to database
-  const saveCodeToDatabase = async (newCode: string) => {
-    try {
-      const response = await fetch(`/api/project/${params.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: newCode }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to save code");
-      }
-      // Don't update dbData here to avoid re-renders
-      // The code state is already updated locally
-    } catch (error) {
-      console.error("Error saving code:", error);
-    }
-  };
+  const { updateChat, saveCode } = useProjectApi(params.id as string);
 
   useEffect(() => {
     const fetchChat = async () => {
@@ -78,25 +63,15 @@ export default function ChatPage() {
       api: "/api/agent",
       initialMessages: [],
       onFinish: async (message) => {
+        console.log("Assistant message received:", message);
         // Update messages in database after each message
         try {
-          const response = await fetch(`/api/project/${params.id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat: { messages: [...messages, message] },
-            }),
-          });
-          if (!response.ok) {
-            throw new Error("Failed to update chat");
-          }
-          const updatedData = await response.json();
+          const updatedData = await updateChat([...messages, message]);
+          console.log("Updated data after assistant message:", updatedData);
           setDbData(updatedData);
         } catch (error) {
           console.error("Error updating chat:", error);
         }
-        // --- Save code block to DB if present ---
-        // Try to extract code block from message
         let codeBlock = "";
         if (message.parts) {
           for (const part of message.parts) {
@@ -119,13 +94,14 @@ export default function ChatPage() {
           setCode(newCode); // Ensure editor appears
           setIsStreamingCode(false); // End streaming state
           setActiveTab("editor"); // Switch to editor tab
-          await saveCodeToDatabase(newCode);
+          await saveCode(newCode);
         }
       },
     });
 
   useEffect(() => {
     if (dbData?.chat?.messages) {
+      console.log("Setting messages from dbData:", dbData.chat.messages);
       setMessages(dbData.chat.messages);
     }
   }, [dbData, setMessages]);
@@ -138,6 +114,7 @@ export default function ChatPage() {
       !input &&
       !autoSubmitRef.current
     ) {
+      console.log("Auto-submitting initial prompt:", initialPrompt);
       handleInputChange({
         target: { value: initialPrompt },
       } as React.ChangeEvent<HTMLInputElement>);
@@ -148,10 +125,27 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (shouldAutoSubmit && input === initialPrompt) {
-      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-      setShouldAutoSubmit(false);
+      const submitInitialPrompt = async () => {
+        try {
+          console.log("Saving initial prompt to DB:", initialPrompt);
+          const updatedData = await updateChat([
+            {
+              id: Date.now().toString(),
+              role: "user" as const,
+              content: initialPrompt,
+            },
+          ]);
+          console.log("Initial prompt saved, updated data:", updatedData);
+          setDbData(updatedData);
+          handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+          setShouldAutoSubmit(false);
+        } catch (error) {
+          console.error("Error saving initial prompt:", error);
+        }
+      };
+      submitInitialPrompt();
     }
-  }, [shouldAutoSubmit, input, initialPrompt, handleSubmit]);
+  }, [shouldAutoSubmit, input, initialPrompt, handleSubmit, updateChat]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -164,24 +158,23 @@ export default function ChatPage() {
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    // Save user message to DB
+
+    const newMessage = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      content: input,
+    };
+    console.log("Saving user message:", newMessage);
+
     try {
-      await fetch(`/api/project/${params.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat: {
-            messages: [
-              ...messages,
-              { id: Date.now().toString(), role: "user", content: input },
-            ],
-          },
-        }),
-      });
+      const updatedData = await updateChat([...messages, newMessage]);
+      console.log("User message saved, updated data:", updatedData);
+      setDbData(updatedData);
+      setMessages([...messages, newMessage]);
+      handleSubmit(e);
     } catch (error) {
       console.error("Error saving user message:", error);
     }
-    handleSubmit(e);
   };
 
   // Helper to split markdown into bubbles (text, code)
@@ -231,7 +224,7 @@ export default function ChatPage() {
             onApply={() => {
               setCode(content);
               setActiveTab("editor");
-              saveCodeToDatabase(content);
+              saveCode(content);
             }}
           />
         </div>
@@ -257,7 +250,7 @@ export default function ChatPage() {
     if (code) {
       setPreviousCode(code);
       setPendingChanges(null);
-      saveCodeToDatabase(code);
+      saveCode(code);
     }
   };
 
@@ -268,27 +261,6 @@ export default function ChatPage() {
       setPendingChanges(null);
     }
   };
-
-  useEffect(() => {
-    // Find the latest assistant message with a code block if streaming
-    if (messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg.role === "assistant" && input !== "") {
-        for (const part of lastMsg.parts || []) {
-          if (part.type === "text" && part.text) {
-            const match = part.text.match(/```([\s\S]*?)```/);
-            if (match) {
-              setCode(match[1].replace(/^\n+|\n+$/g, ""));
-              setIsStreamingCode(true);
-              return;
-            }
-          }
-        }
-      } else {
-        setIsStreamingCode(false);
-      }
-    }
-  }, [messages, input]);
 
   if (!dbData) return <div>Loading...</div>;
 
@@ -392,7 +364,7 @@ export default function ChatPage() {
                       }
                       setCode(newCode);
                       if (!isStreamingCode) {
-                        saveCodeToDatabase(newCode);
+                        saveCode(newCode);
                       }
                     }}
                     readOnly={isStreamingCode}
