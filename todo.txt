@@ -6,7 +6,6 @@ BIG TODO:
 MINOR:
 - hide canvas button for editor
 - function calls, such as retrieving the current time via AI SDK method
-- alerts on errors
 - images to projects and use them in the chat/prompt
 
 
