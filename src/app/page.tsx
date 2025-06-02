@@ -12,6 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
 import { useProjects } from "@/hooks/use-projects";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const PLACEHOLDERS = [
   "create a gradient button with hover effect",
@@ -43,6 +45,7 @@ export default function Home() {
   >([]);
   const router = useRouter();
   const { projects, setProjects } = useProjects();
+  const [error, setError] = useState<string | null>(null);
 
   // Typing animation for placeholder
   useEffect(() => {
@@ -129,8 +132,10 @@ export default function Home() {
         url: urls[i],
       }));
       setUploadedFiles((prev) => [...prev, ...newFiles]);
+      setError(null);
     } catch (err) {
       console.error(err);
+      setError("Failed to upload files. Please try again.");
     }
     setUploading(false);
   }
@@ -147,12 +152,17 @@ export default function Home() {
           name: inputValue.slice(0, 50) + "...",
         }),
       });
+      if (!response.ok) {
+        throw new Error("Failed to create project");
+      }
       const data = await response.json();
       setProjects([...projects, data]);
       setInputValue("");
+      setError(null);
       router.push(`/chat/${data.id}?prompt=${encodeURIComponent(inputValue)}`);
     } catch (error) {
       console.error("Error creating project:", error);
+      setError("Failed to create project. Please try again.");
     }
   };
 
@@ -164,6 +174,15 @@ export default function Home() {
       <p className="text-xl text-muted-foreground mb-10 text-center">
         Build any component by prompting
       </p>
+      {error && (
+        <div className="w-full max-w-2xl mb-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       <form className="w-full flex justify-center" onSubmit={handleSubmit}>
         <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-10 py-8 shadow-lg gap-3 relative">
           {/* Uploaded files chips */}

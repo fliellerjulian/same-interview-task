@@ -12,9 +12,10 @@ import React from "react";
 import { computeDiff } from "@/lib/utils";
 import ExpandableCodeBlock from "@/components/ExpandableCodeBlock";
 import { useProjectApi } from "@/hooks/useProjectApi";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ChatPage() {
   const params = useParams();
@@ -39,6 +40,7 @@ export default function ChatPage() {
     deletions: string[];
   } | null>(null);
   const [isEditorVisible, setIsEditorVisible] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { updateChat, saveCode } = useProjectApi(params.id as string);
 
@@ -54,14 +56,17 @@ export default function ChatPage() {
             setCode(data.code);
             setActiveTab("editor");
           }
+        } else {
+          throw new Error("Failed to fetch chat data");
         }
       } catch (error) {
         console.error("Error fetching chat:", error);
+        setError("Failed to load chat data. Please try again.");
       }
     };
 
     fetchChat();
-  }, [params.id, code]); // Only refetch when id changes or code is null
+  }, [params.id, code]);
 
   const {
     messages,
@@ -162,8 +167,10 @@ export default function ChatPage() {
       const updatedData = await updateChat([...messages, newMessage]);
       setDbData(updatedData);
       handleSubmit(e);
+      setError(null);
     } catch (error) {
       console.error("Error saving user message:", error);
+      setError("Failed to send message. Please try again.");
     }
   };
 
@@ -261,6 +268,15 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[100vh] w-full">
+      {error && (
+        <div className="p-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       {code ? (
         <Tabs
           value={activeTab}
