@@ -27,13 +27,13 @@ export default function ChatPage() {
   const [previousCode, setPreviousCode] = useState<string | undefined>(
     undefined
   );
-  const [isStreamingCode, setIsStreamingCode] = useState(false);
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
+  const autoSubmitRef = useRef(false);
+  const [isStreamingCode, setIsStreamingCode] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{
     additions: string[];
     deletions: string[];
   } | null>(null);
-  const autoSubmitRef = useRef(false);
 
   const { updateChat, saveCode } = useProjectApi(params.id as string);
 
@@ -63,15 +63,11 @@ export default function ChatPage() {
       api: "/api/agent",
       initialMessages: [],
       onFinish: async (message) => {
-        console.log("Assistant message received:", message);
         // Update messages in database after each message
-        try {
-          const updatedData = await updateChat([...messages, message]);
-          console.log("Updated data after assistant message:", updatedData);
-          setDbData(updatedData);
-        } catch (error) {
-          console.error("Error updating chat:", error);
-        }
+
+        const updatedData = await updateChat([...messages, message]);
+        setDbData(updatedData);
+
         let codeBlock = "";
         if (message.parts) {
           for (const part of message.parts) {
@@ -101,12 +97,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (dbData?.chat?.messages) {
-      console.log("Setting messages from dbData:", dbData.chat.messages);
       setMessages(dbData.chat.messages);
     }
   }, [dbData, setMessages]);
 
-  // Auto-submit prompt from query string if present, only if there are no messages
   useEffect(() => {
     if (
       initialPrompt &&
@@ -114,7 +108,6 @@ export default function ChatPage() {
       !input &&
       !autoSubmitRef.current
     ) {
-      console.log("Auto-submitting initial prompt:", initialPrompt);
       handleInputChange({
         target: { value: initialPrompt },
       } as React.ChangeEvent<HTMLInputElement>);
@@ -125,27 +118,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (shouldAutoSubmit && input === initialPrompt) {
-      const submitInitialPrompt = async () => {
-        try {
-          console.log("Saving initial prompt to DB:", initialPrompt);
-          const updatedData = await updateChat([
-            {
-              id: Date.now().toString(),
-              role: "user" as const,
-              content: initialPrompt,
-            },
-          ]);
-          console.log("Initial prompt saved, updated data:", updatedData);
-          setDbData(updatedData);
-          handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-          setShouldAutoSubmit(false);
-        } catch (error) {
-          console.error("Error saving initial prompt:", error);
-        }
-      };
-      submitInitialPrompt();
+      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+      setShouldAutoSubmit(false);
     }
-  }, [shouldAutoSubmit, input, initialPrompt, handleSubmit, updateChat]);
+  }, [shouldAutoSubmit, input, initialPrompt, handleSubmit]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -164,11 +140,9 @@ export default function ChatPage() {
       role: "user" as const,
       content: input,
     };
-    console.log("Saving user message:", newMessage);
 
     try {
       const updatedData = await updateChat([...messages, newMessage]);
-      console.log("User message saved, updated data:", updatedData);
       setDbData(updatedData);
       setMessages([...messages, newMessage]);
       handleSubmit(e);
