@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Square } from "lucide-react";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
 import { uploadFiles } from "@/lib/utils";
 
@@ -9,6 +9,8 @@ interface ChatInputProps {
   onSubmit: (e: React.FormEvent) => void;
   disabled?: boolean;
   onFilesChange?: (files: { name: string; url: string }[]) => void;
+  isStreaming?: boolean;
+  onStop?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -17,6 +19,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onSubmit,
   disabled,
   onFilesChange,
+  isStreaming = false,
+  onStop,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,25 +116,35 @@ const ChatInput: React.FC<ChatInputProps> = ({
               onChange={handleFileChange}
             />
           </button>
-          <button
-            type="submit"
-            className="rounded-xl w-9 h-9 bg-black text-white flex items-center justify-center shadow-md disabled:opacity-50"
-            disabled={disabled || !value.trim()}
-          >
-            <svg
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={onStop}
+              className="rounded-xl w-9 h-9 bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 12h14M12 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+              <Square className="size-5" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="rounded-xl w-9 h-9 bg-black text-white flex items-center justify-center shadow-md disabled:opacity-50"
+              disabled={disabled || !value.trim()}
+            >
+              <svg
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 12h14M12 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </form>

@@ -4,7 +4,6 @@ BIG TODO:
 2. stop button
 
 MINOR:
-- hide canvas button for editor
 - function calls, such as retrieving the current time via AI SDK method
 - images to projects and use them in the chat/prompt
 

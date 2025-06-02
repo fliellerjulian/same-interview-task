@@ -32,6 +32,7 @@ export default function ChatPage() {
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const autoSubmitRef = useRef(false);
   const [isStreamingCode, setIsStreamingCode] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{
     additions: string[];
     deletions: string[];
@@ -61,42 +62,54 @@ export default function ChatPage() {
     fetchChat();
   }, [params.id, code]); // Only refetch when id changes or code is null
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages } =
-    useChat({
-      api: "/api/agent",
-      initialMessages: [],
-      onFinish: async (message) => {
-        // Update messages in database after each message
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setMessages,
+    isLoading,
+    stop,
+  } = useChat({
+    api: "/api/agent",
+    initialMessages: [],
+    onFinish: async (message) => {
+      setIsStreaming(false);
+      // Update messages in database after each message
+      const updatedData = await updateChat([...messages, message]);
+      setDbData(updatedData);
 
-        const updatedData = await updateChat([...messages, message]);
-        setDbData(updatedData);
-
-        let codeBlock = "";
-        if (message.parts) {
-          for (const part of message.parts) {
-            if (part.type === "text" && part.text) {
-              const match = part.text.match(/```([\s\S]*?)```/);
-              if (match) {
-                codeBlock = match[1].replace(/^\n+|\n+$/g, "");
-                break;
-              }
+      let codeBlock = "";
+      if (message.parts) {
+        for (const part of message.parts) {
+          if (part.type === "text" && part.text) {
+            const match = part.text.match(/```([\s\S]*?)```/);
+            if (match) {
+              codeBlock = match[1].replace(/^\n+|\n+$/g, "");
+              break;
             }
           }
         }
-        if (codeBlock) {
-          const newCode = codeBlock;
-          if (code) {
-            const diff = computeDiff(code, newCode);
-            setPendingChanges(diff);
-            setPreviousCode(code);
-          }
-          setCode(newCode); // Ensure editor appears
-          setIsStreamingCode(false); // End streaming state
-          setActiveTab("editor"); // Switch to editor tab
-          await saveCode(newCode);
+      }
+      if (codeBlock) {
+        const newCode = codeBlock;
+        if (code) {
+          const diff = computeDiff(code, newCode);
+          setPendingChanges(diff);
+          setPreviousCode(code);
         }
-      },
-    });
+        setCode(newCode); // Ensure editor appears
+        setIsStreamingCode(false); // End streaming state
+        setActiveTab("editor"); // Switch to editor tab
+        await saveCode(newCode);
+      }
+    },
+  });
+
+  // Update streaming state based on isLoading
+  useEffect(() => {
+    setIsStreaming(isLoading);
+  }, [isLoading]);
 
   useEffect(() => {
     if (dbData?.chat?.messages) {
@@ -151,6 +164,11 @@ export default function ChatPage() {
     } catch (error) {
       console.error("Error saving user message:", error);
     }
+  };
+
+  const handleStop = () => {
+    stop();
+    setIsStreaming(false);
   };
 
   // Helper to split markdown into bubbles (text, code)
@@ -344,6 +362,8 @@ export default function ChatPage() {
                   onChange={handleInputChange}
                   onSubmit={handleUserSubmit}
                   disabled={false}
+                  isStreaming={isStreaming}
+                  onStop={handleStop}
                 />
               </div>
             </div>
@@ -449,6 +469,8 @@ export default function ChatPage() {
                   onChange={handleInputChange}
                   onSubmit={handleUserSubmit}
                   disabled={false}
+                  isStreaming={isStreaming}
+                  onStop={handleStop}
                 />
               </div>
             </div>
