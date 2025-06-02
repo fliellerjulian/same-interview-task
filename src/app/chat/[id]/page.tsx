@@ -422,6 +422,7 @@ export default function ChatPage() {
                         }}
                         readOnly={isStreamingCode}
                         highlightChanges={pendingChanges}
+                        showCopyButton={true}
                       />
                     </div>
                   </div>

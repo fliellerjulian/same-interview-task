@@ -34,6 +34,7 @@ const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({
           mode="editor"
           code={expanded ? code : previewCode}
           readOnly={true}
+          showCopyButton={false}
         />
       </div>
       {lines.length > 2 && (
