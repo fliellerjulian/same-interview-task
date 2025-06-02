@@ -118,7 +118,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (shouldAutoSubmit && input === initialPrompt) {
-      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+      handleUserSubmit({ preventDefault: () => {} } as React.FormEvent);
       setShouldAutoSubmit(false);
     }
   }, [shouldAutoSubmit, input, initialPrompt, handleSubmit]);
