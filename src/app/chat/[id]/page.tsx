@@ -390,22 +390,6 @@ export default function ChatPage() {
               <div className="w-1/2 flex flex-col h-full pt-4">
                 <TabsContent value="editor" className="flex-1 h-full p-0">
                   <div className="h-full flex flex-col">
-                    {pendingChanges && (
-                      <div className="flex gap-2 p-2 bg-muted border-b">
-                        <button
-                          onClick={handleAcceptChanges}
-                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                        >
-                          Accept Changes
-                        </button>
-                        <button
-                          onClick={handleRejectChanges}
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                        >
-                          Reject Changes
-                        </button>
-                      </div>
-                    )}
                     <div className="flex-1 relative">
                       <LiveCodeEditor
                         mode="editor"
@@ -423,6 +407,8 @@ export default function ChatPage() {
                         readOnly={isStreamingCode}
                         highlightChanges={pendingChanges}
                         showCopyButton={true}
+                        onAcceptChanges={handleAcceptChanges}
+                        onRejectChanges={handleRejectChanges}
                       />
                     </div>
                   </div>

@@ -61,6 +61,8 @@ type LiveCodeEditorProps = {
     deletions: string[];
   } | null;
   showCopyButton?: boolean;
+  onAcceptChanges?: () => void;
+  onRejectChanges?: () => void;
 };
 
 const stripCodeBlockLang = (code: string) => {
@@ -75,6 +77,8 @@ export default function LiveCodeEditor({
   readOnly = false,
   highlightChanges,
   showCopyButton = true,
+  onAcceptChanges,
+  onRejectChanges,
 }: LiveCodeEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -185,38 +189,80 @@ export default function LiveCodeEditor({
   if (mode === "editor") {
     return (
       <div className="h-full w-full relative">
-        {showCopyButton && (
-          <button
-            onClick={handleCopy}
-            className="absolute top-2 right-2 z-10 p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition-colors"
-            title="Copy code"
-          >
-            {copySuccess ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-green-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+        <div className="absolute top-2 right-2 z-10 flex gap-2">
+          {highlightChanges && (
+            <>
+              <button
+                onClick={onAcceptChanges}
+                className="p-2 rounded-md bg-green-600 hover:bg-green-700 transition-colors"
+                title="Accept changes"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-300"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={onRejectChanges}
+                className="p-2 rounded-md bg-red-600 hover:bg-red-700 transition-colors"
+                title="Reject changes"
               >
-                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-              </svg>
-            )}
-          </button>
-        )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </>
+          )}
+          {showCopyButton && (
+            <button
+              onClick={handleCopy}
+              className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition-colors"
+              title="Copy code"
+            >
+              {copySuccess ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-300"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                  <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
         <Editor
           height="100%"
           defaultLanguage="javascript"
