@@ -292,7 +292,7 @@ export default function ChatPage() {
               </Button>
             )}
           </div>
-          <div className="flex flex-1 w-full">
+          <div className="flex flex-1 w-full ">
             {/* Chat Section */}
             <div
               className={`
@@ -350,7 +350,7 @@ export default function ChatPage() {
 
             {/* Code Editor Section */}
             {isEditorVisible && (
-              <div className="w-1/2 flex flex-col h-full">
+              <div className="w-1/2 flex flex-col h-full pt-4">
                 <TabsContent value="editor" className="flex-1 h-full p-0">
                   <div className="h-full flex flex-col">
                     {pendingChanges && (
