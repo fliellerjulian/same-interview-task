@@ -144,7 +144,6 @@ export default function ChatPage() {
     try {
       const updatedData = await updateChat([...messages, newMessage]);
       setDbData(updatedData);
-      setMessages([...messages, newMessage]);
       handleSubmit(e);
     } catch (error) {
       console.error("Error saving user message:", error);
