@@ -23,8 +23,6 @@ export default function ChatPage() {
   const initialPrompt = searchParams.get("prompt");
   const initialImages = searchParams.get("images")?.split(",") || [];
 
-  const [files, setFiles] = useState<FileList | undefined>(undefined);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [dbData, setDbData] = useState<
     InferSelectModel<typeof Projects> | undefined
   >();
@@ -175,27 +173,13 @@ export default function ChatPage() {
       // Submit with files if any
       handleSubmit(e, {
         experimental_attachments:
-          initialImages.length > 0
+          initialImages.length > 0 && shouldAutoSubmit == true
             ? initialImages.map((image) => ({
                 url: image,
                 contentType: `image/${image.split(".").pop()?.toLowerCase()}`,
               }))
-            : files
-            ? [
-                {
-                  url: URL.createObjectURL(files[0]),
-                  contentType: files[0].type,
-                },
-              ]
             : [],
       });
-
-      // Clear files after submission
-      setFiles(undefined);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-
       setError(null);
     } catch (error) {
       console.error("Error saving user message:", error);
@@ -410,7 +394,6 @@ export default function ChatPage() {
                   disabled={false}
                   isStreaming={isStreaming}
                   onStop={handleStop}
-                  onFilesChange={setFiles}
                 />
               </div>
             </div>
@@ -505,7 +488,6 @@ export default function ChatPage() {
                   disabled={false}
                   isStreaming={isStreaming}
                   onStop={handleStop}
-                  onFilesChange={setFiles}
                 />
               </div>
             </div>

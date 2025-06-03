@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
-import { Paperclip, Square } from "lucide-react";
-import { UploadedFileChip } from "@/components/UploadedFileChip";
+import React, { useRef } from "react";
+import { Square } from "lucide-react";
 
 interface ChatInputProps {
   value: string;
@@ -19,57 +18,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
   disabled,
   isStreaming = false,
   onStop,
-  onFilesChange,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<FileList | undefined>(undefined);
-
-  // Auto-expand textarea height
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-    }
-  }, [value]);
-
-  // Notify parent of file changes
-  useEffect(() => {
-    if (onFilesChange) onFilesChange(files);
-  }, [files, onFilesChange]);
-
-  function handleRemoveFile() {
-    setFiles(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
-
-  function handlePaperclipClick() {
-    fileInputRef.current?.click();
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files) {
-      setFiles(e.target.files);
-    }
-  }
 
   return (
     <form onSubmit={onSubmit} className="w-full flex justify-center">
       <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-6 py-4 shadow-lg gap-2 relative">
-        {/* Selected files chips */}
-        <div className="absolute left-6 top-2 flex gap-2 flex-wrap z-10">
-          {files &&
-            Array.from(files).map((file, index) => (
-              <UploadedFileChip
-                key={index}
-                file={{ name: file.name, url: URL.createObjectURL(file) }}
-                onRemove={handleRemoveFile}
-              />
-            ))}
-        </div>
         <div className="flex items-start gap-3 w-full relative">
           <textarea
             ref={textareaRef}
@@ -83,23 +37,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           />
         </div>
         <div className="flex justify-end items-end gap-2 w-full mt-2">
-          <button
-            type="button"
-            className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-zinc-200 disabled:opacity-50"
-            onClick={handlePaperclipClick}
-            disabled={disabled}
-            tabIndex={-1}
-          >
-            <Paperclip className="size-5" />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </button>
           {isStreaming ? (
             <button
               type="button"

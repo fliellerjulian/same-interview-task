@@ -32,3 +32,7 @@ pnpm i
 ```bash
 pnpm dev
 ```
+
+### WIP
+
+- Adding images to the prompt is currently only working for the inital prompt
