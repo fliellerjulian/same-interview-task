@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export async function uploadFiles(
   files: FileList | File[]
-): Promise<{ urls: string[]; openaiFiles: string[] }> {
+): Promise<{ urls: string[] }> {
   const formData = new FormData();
   Array.from(files).forEach((file) => formData.append("files", file));
 
@@ -16,7 +16,6 @@ export async function uploadFiles(
   const data = await res.json();
   return {
     urls: data.urls as string[],
-    openaiFiles: data.openaiFiles as string[],
   };
 }
 

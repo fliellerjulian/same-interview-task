@@ -1,16 +1,15 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Paperclip, Square } from "lucide-react";
 import { UploadedFileChip } from "@/components/UploadedFileChip";
-import { uploadFiles } from "@/lib/utils";
 
 interface ChatInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   disabled?: boolean;
-  onFilesChange?: (files: { name: string; url: string }[]) => void;
   isStreaming?: boolean;
   onStop?: () => void;
+  onFilesChange?: (files: FileList | undefined) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -18,16 +17,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSubmit,
   disabled,
-  onFilesChange,
   isStreaming = false,
   onStop,
+  onFilesChange,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<
-    { name: string; url: string }[]
-  >([]);
+  const [files, setFiles] = useState<FileList | undefined>(undefined);
 
   // Auto-expand textarea height
   useEffect(() => {
@@ -40,51 +36,39 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Notify parent of file changes
   useEffect(() => {
-    if (onFilesChange) onFilesChange(uploadedFiles);
-  }, [uploadedFiles, onFilesChange]);
+    if (onFilesChange) onFilesChange(files);
+  }, [files, onFilesChange]);
 
-  function handleRemoveFile(url: string) {
-    setUploadedFiles((prev) => prev.filter((file) => file.url !== url));
+  function handleRemoveFile() {
+    setFiles(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handlePaperclipClick() {
     fileInputRef.current?.click();
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      const urls = await uploadFiles(files);
-      const newFiles = Array.from(files).map((file, i) => ({
-        name: file.name,
-        url: urls.urls[i],
-      }));
-      setUploadedFiles((prev) => [...prev, ...newFiles]);
-    } catch (err) {
-      console.error(err);
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) {
+      setFiles(e.target.files);
     }
-    setUploading(false);
   }
 
   return (
     <form onSubmit={onSubmit} className="w-full flex justify-center">
       <div className="flex flex-col w-full max-w-2xl bg-muted rounded-2xl px-6 py-4 shadow-lg gap-2 relative">
-        {/* Uploaded files chips */}
+        {/* Selected files chips */}
         <div className="absolute left-6 top-2 flex gap-2 flex-wrap z-10">
-          {uploadedFiles.map((file) => (
-            <UploadedFileChip
-              key={file.url}
-              file={file}
-              onRemove={handleRemoveFile}
-            />
-          ))}
-          {uploading && (
-            <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1 text-sm font-medium text-black shadow-sm select-none">
-              Uploading...
-            </span>
-          )}
+          {files &&
+            Array.from(files).map((file, index) => (
+              <UploadedFileChip
+                key={index}
+                file={{ name: file.name, url: URL.createObjectURL(file) }}
+                onRemove={handleRemoveFile}
+              />
+            ))}
         </div>
         <div className="flex items-start gap-3 w-full relative">
           <textarea
@@ -103,7 +87,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-zinc-200 disabled:opacity-50"
             onClick={handlePaperclipClick}
-            disabled={uploading}
+            disabled={disabled}
             tabIndex={-1}
           >
             <Paperclip className="size-5" />

@@ -147,7 +147,7 @@ export default function Home() {
       setError(null);
       const queryParams = new URLSearchParams({
         prompt: inputValue,
-        urls: uploadedFiles.map((file) => file.url).join(","),
+        images: uploadedFiles.map((file) => file.url).join(","),
       });
       router.push(`/chat/${data.id}?${queryParams.toString()}`);
     } catch (error) {

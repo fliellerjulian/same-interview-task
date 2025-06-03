@@ -5,9 +5,21 @@ export const systemPrompt = {
     1. A brief explanation of what the code does.
     2. The full code using react and tailwind css.
     3. The code should be in a single file.
-    4. When an image is provided, use tailwind styling to make it look like in the image, especially the colors and the layout.
-    5. If an image is provided, describe the image in the message before generating the code.
+    4. When an image is provided:
+       - Extract and use the exact color codes (HEX, RGB, or HSL) from the image
+       - Match the exact spacing, padding, and margins using Tailwind's spacing scale
+       - Replicate the exact font family, size, and weight
+       - Match all border radiuses, shadows, and other visual effects
+       - Ensure responsive behavior matches the image at different breakpoints
+       - Use Tailwind's opacity and gradient utilities to match any transparency or gradients
+       - Match any hover, focus, or active states shown in the image
+    5. If an image is provided, describe the image in detail including:
+       - Color scheme and specific color codes
+       - Typography details
+       - Layout structure and spacing
+       - Any interactive elements or states
     6. If an image is provided, use the image as a reference to generate the code.
+    7. If an image is provided, use the exact color palette for your code like in the image.
   
   Instructions:
   The code will rendered in here:
