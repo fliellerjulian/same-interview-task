@@ -5,15 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export async function uploadFiles(files: FileList | File[]): Promise<string[]> {
+export async function uploadFiles(
+  files: FileList | File[]
+): Promise<{ urls: string[]; openaiFiles: string[] }> {
   const formData = new FormData();
   Array.from(files).forEach((file) => formData.append("files", file));
 
   const res = await fetch("/api/upload", { method: "POST", body: formData });
-  console.log(res);
   if (!res.ok) throw new Error("Upload failed");
   const data = await res.json();
-  return data.urls as string[];
+  return {
+    urls: data.urls as string[],
+    openaiFiles: data.openaiFiles as string[],
+  };
 }
 
 export const computeDiff = (oldCode: string, newCode: string) => {
