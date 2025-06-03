@@ -1,6 +1,6 @@
 export const PLACEHOLDERS = [
-  "create a gradient button with hover effect",
   "create a pricing table with toggle",
+  "create a gradient button with hover effect",
   "create a product card with image hover zoom",
   "create a search bar with autocomplete",
   "create a notification toast",

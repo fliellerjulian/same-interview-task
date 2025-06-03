@@ -59,7 +59,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       const urls = await uploadFiles(files);
       const newFiles = Array.from(files).map((file, i) => ({
         name: file.name,
-        url: urls[i],
+        url: urls.urls[i],
       }));
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     } catch (err) {

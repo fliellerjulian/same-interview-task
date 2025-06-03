@@ -94,3 +94,17 @@ export const generateHTML = (compiledCode: string) => `
 export const stripCodeBlockLang = (code: string) => {
   return code.replace(/^[a-zA-Z0-9]*\s*/, "");
 };
+
+// Function to convert image URL to base64
+export async function urlToBase64(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    const mimeType = response.headers.get("content-type") || "image/jpeg";
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    console.error("Error converting URL to base64:", error);
+    throw error;
+  }
+}

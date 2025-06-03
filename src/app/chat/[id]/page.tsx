@@ -21,6 +21,7 @@ export default function ChatPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const initialPrompt = searchParams.get("prompt");
+  const initialUrls = searchParams.get("urls")?.split(",") || [];
   const [dbData, setDbData] = useState<
     InferSelectModel<typeof Projects> | undefined
   >();
@@ -79,6 +80,9 @@ export default function ChatPage() {
   } = useChat({
     api: "/api/agent",
     initialMessages: [],
+    body: {
+      urls: initialUrls,
+    },
     onFinish: async (message) => {
       setIsStreaming(false);
       // Update messages in database after each message

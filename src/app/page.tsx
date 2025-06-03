@@ -113,8 +113,9 @@ export default function Home() {
       const urls = await uploadFiles(files);
       const newFiles = Array.from(files).map((file, i) => ({
         name: file.name,
-        url: urls[i],
+        url: urls.urls[i],
       }));
+
       setUploadedFiles((prev) => [...prev, ...newFiles]);
       setError(null);
     } catch (err) {
@@ -134,6 +135,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: inputValue.slice(0, 50) + "...",
+          urls: uploadedFiles.map((file) => file.url),
         }),
       });
       if (!response.ok) {
@@ -143,7 +145,11 @@ export default function Home() {
       setProjects([...projects, data]);
       setInputValue("");
       setError(null);
-      router.push(`/chat/${data.id}?prompt=${encodeURIComponent(inputValue)}`);
+      const queryParams = new URLSearchParams({
+        prompt: inputValue,
+        urls: uploadedFiles.map((file) => file.url).join(","),
+      });
+      router.push(`/chat/${data.id}?${queryParams.toString()}`);
     } catch (error) {
       console.error("Error creating project:", error);
       setError("Failed to create project. Please try again.");
