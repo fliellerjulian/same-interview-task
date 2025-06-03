@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as Babel from "@babel/standalone";
 import Editor from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
+import { generateHTML, stripCodeBlockLang } from "@/lib/utils";
 
 interface IModelDeltaDecoration {
   range: {
@@ -19,38 +20,6 @@ interface IModelDeltaDecoration {
   };
 }
 
-const generateHTML = (compiledCode: string) => `
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {}
-        }
-      }
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script>
-      // Make React hooks available globally
-      const { useState, useEffect, useRef, useCallback, useMemo } = React;
-      const { createRoot } = ReactDOM;
-
-      // Wrap the code in an IIFE to avoid global scope pollution
-      (function() {
-        ${compiledCode}
-      })();
-    </script>
-  </body>
-</html>
-`;
-
 type LiveCodeEditorProps = {
   mode?: "editor" | "preview";
   code?: string;
@@ -63,11 +32,6 @@ type LiveCodeEditorProps = {
   showCopyButton?: boolean;
   onAcceptChanges?: () => void;
   onRejectChanges?: () => void;
-};
-
-const stripCodeBlockLang = (code: string) => {
-  // Remove a leading jsx, js, or similar line
-  return code.replace(/^[a-zA-Z0-9]*\s*/, "");
 };
 
 export default function LiveCodeEditor({

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, ArrowUp } from "lucide-react";
 import React, { useRef, useEffect, useState } from "react";
 import { uploadFiles } from "@/lib/utils";
-
+import { PLACEHOLDERS } from "./constants/placeholders";
 import {
   Tooltip,
   TooltipContent,
@@ -14,22 +14,6 @@ import { UploadedFileChip } from "@/components/UploadedFileChip";
 import { useProjects } from "@/hooks/use-projects";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-
-const PLACEHOLDERS = [
-  "create a gradient button with hover effect",
-  "create a pricing table with toggle",
-  "create a product card with image hover zoom",
-  "create a search bar with autocomplete",
-  "create a notification toast",
-  "create a dark mode toggle",
-  "create a progress bar with animation",
-  "create a modal with a close button",
-  "create a dropdown menu with hover effect",
-  "create a card with a shadow effect",
-  "create a button with a ripple effect",
-  "create a form with validation",
-  "create a table with pagination",
-];
 
 export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);

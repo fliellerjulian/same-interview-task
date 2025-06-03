@@ -123,6 +123,7 @@ export default function ChatPage() {
     }
   }, [dbData, setMessages]);
 
+  // Auto-submit if initialPrompt is provided
   useEffect(() => {
     if (
       initialPrompt &&
