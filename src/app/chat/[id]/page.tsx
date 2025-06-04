@@ -22,7 +22,8 @@ export default function ChatPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const initialPrompt = searchParams.get("prompt");
-  const initialImages = searchParams.get("images")?.split(",") || [];
+  const initialImages =
+    searchParams.get("images")?.split(",").filter(Boolean) || [];
 
   const [dbData, setDbData] = useState<
     InferSelectModel<typeof Projects> | undefined
@@ -172,15 +173,17 @@ export default function ChatPage() {
       setDbData(updatedData);
 
       // Submit with files if any
-      handleSubmit(e, {
-        experimental_attachments:
-          initialImages.length > 0 && shouldAutoSubmit == true
-            ? initialImages.map((image) => ({
-                url: image,
-                contentType: `image/${image.split(".").pop()?.toLowerCase()}`,
-              }))
-            : [],
-      });
+      if (initialImages.length > 0 && shouldAutoSubmit == true) {
+        handleSubmit(e, {
+          experimental_attachments: initialImages.map((image) => ({
+            url: image,
+            contentType: `image/${image.split(".").pop()?.toLowerCase()}`,
+          })),
+        });
+      } else {
+        handleSubmit(e, {});
+      }
+
       setError(null);
     } catch (error) {
       console.error("Error saving user message:", error);
