@@ -400,7 +400,7 @@ export default function ChatPage() {
 
             {/* Code Editor Section */}
             {isEditorVisible && (
-              <div className="w-1/2 flex flex-col h-full pt-4">
+              <div className="w-1/2 flex flex-col h-full pt-8">
                 <TabsContent value="editor" className="flex-1 h-full p-0">
                   <div className="h-full flex flex-col">
                     <div className="flex-1 relative">
