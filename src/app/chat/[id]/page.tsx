@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SidebarTriggerWrapper } from "@/components/ui/SidebarTriggerWrapper";
 
 export default function ChatPage() {
   const params = useParams();
@@ -305,9 +306,12 @@ export default function ChatPage() {
             {/* Left: Chat title (always) */}
             <div
               className={
-                code && isEditorVisible ? "w-1/2 flex items-center" : ""
+                code && isEditorVisible
+                  ? "w-1/2 flex items-center gap-2"
+                  : "flex items-center gap-2"
               }
             >
+              <SidebarTriggerWrapper />
               <span className="font-semibold text-lg">Chat</span>
             </div>
             {/* Right: Tabs + toggle (if editor open), or just toggle (if hidden) */}
@@ -442,7 +446,10 @@ export default function ChatPage() {
         // If no code, fallback to just chat and topbar
         <>
           <div className="flex items-center justify-between h-14 px-6 border-b bg-white/80 backdrop-blur sticky top-0 z-30">
-            <span className="font-semibold text-lg">Chat</span>
+            <div className="flex items-center gap-2">
+              <SidebarTriggerWrapper />
+              <span className="font-semibold text-lg">Chat</span>
+            </div>
           </div>
           <div className="flex flex-1 w-full">
             <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 min-h-0">
