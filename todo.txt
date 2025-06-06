@@ -1,0 +1,4 @@
+- compare diffs fix
+- expandbale editor back to code editor && apply button
+- better directory UI
+- auto select first file on editor open
