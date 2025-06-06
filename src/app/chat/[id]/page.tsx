@@ -130,7 +130,7 @@ export default function ChatPage() {
         setFiles(newFiles);
         setIsStreamingCode(false);
         setActiveTab("editor");
-        await saveCode(JSON.stringify(newFiles));
+        await saveCode(files);
       }
     },
   });
@@ -270,12 +270,7 @@ export default function ChatPage() {
                   [path]: content,
                 }));
                 setActiveTab("editor");
-                saveCode(
-                  JSON.stringify({
-                    ...files,
-                    [path]: content,
-                  })
-                );
+                saveCode(files);
               }
             }}
           />
@@ -302,7 +297,7 @@ export default function ChatPage() {
     if (selectedFile && files[selectedFile]) {
       setPreviousFiles(files);
       setPendingChanges(null);
-      saveCode(JSON.stringify(files));
+      saveCode(files);
     }
   };
 
@@ -460,7 +455,7 @@ export default function ChatPage() {
                           }
                           setFiles(newFiles);
                           if (!isStreamingCode) {
-                            saveCode(JSON.stringify(newFiles));
+                            saveCode(files);
                           }
                         }}
                         readOnly={isStreamingCode}

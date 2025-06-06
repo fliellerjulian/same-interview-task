@@ -35,12 +35,12 @@ export const useProjectApi = (projectId: string) => {
     }
   };
 
-  const saveCode = async (code: string) => {
+  const saveCode = async (files: Record<string, string>) => {
     try {
       const response = await fetch(`/api/project/${projectId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ files }),
       });
       if (!response.ok) {
         throw new Error("Failed to save code");

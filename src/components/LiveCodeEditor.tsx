@@ -166,6 +166,8 @@ export default function LiveCodeEditor({
             moduleFns[path] = new Function('require', 'exports', 'module', moduleCodes[path].code);
           }
           function require(path, from) {
+            if (path === "react") return window.React;
+            if (path === "react-dom") return window.ReactDOM;
             let resolvedPath = new URL(path, 'file://' + (from || '/App.js')).pathname;
             if (!resolvedPath.endsWith('.js')) resolvedPath += '.js';
             if (!modules[resolvedPath]) {
@@ -352,7 +354,7 @@ export default function LiveCodeEditor({
           <iframe
             ref={iframeRef}
             className="w-full h-full border-0"
-            sandbox="allow-scripts"
+            sandbox="allow-scripts allow-forms"
           />
         )}
       </div>

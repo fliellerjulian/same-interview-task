@@ -23,9 +23,11 @@ export const systemPrompt = {
        - Any interactive elements or states
     6. If an image is provided, use the image as a reference to generate the code.
     7. If an image is provided, use the exact color palette for your code like in the image.
-    8. Always include an entry point file (App.js or index.js) that renders the main component.
-    9. Use relative imports between files (e.g., import Button from './Button').
-    10. Each file should be self-contained and follow React best practices.
+    8. Always include an entry point file (App.js) that renders the main component.
+    9. Do NOT import React or hooks (useState, useEffect, etc.)—they are available as globals.
+    10. Use relative imports between your own files (e.g., import Button from './Button').
+    11. Each file should be self-contained and follow React best practices.
+  
   
   Instructions:
   The code will be rendered in here:
