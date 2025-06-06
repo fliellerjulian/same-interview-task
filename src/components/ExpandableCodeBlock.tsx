@@ -1,56 +1,82 @@
-import React, { useState } from "react";
-import LiveCodeEditor from "@/components/LiveCodeEditor";
+import { useState } from "react";
 
 interface ExpandableCodeBlockProps {
   code: string;
-  onApply?: () => void;
+  path?: string;
+  onApply: () => void;
 }
 
-const ExpandableCodeBlock: React.FC<ExpandableCodeBlockProps> = ({
+export default function ExpandableCodeBlock({
   code,
+  path,
   onApply,
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const lines = code.split("\n");
-  const previewCode =
-    lines.slice(0, 4).join("\n") + (lines.length > 4 ? "\n..." : "");
-
-  // Set height based on expanded state and line count
-  const minHeight = 80; // px, for preview
-  const maxHeight = Math.min(600, lines.length * 24 + 32); // px, for expanded
+}: ExpandableCodeBlockProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="my-2 rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-900 w-[100vw] max-w-xl mx-auto relative">
-      {onApply && (
-        <button
-          onClick={onApply}
-          className="absolute top-2 right-2 px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors z-10"
-        >
-          Apply
-        </button>
-      )}
-      <div style={{ height: expanded ? maxHeight : minHeight }}>
-        <LiveCodeEditor
-          mode="editor"
-          code={expanded ? code : previewCode}
-          readOnly={true}
-          showCopyButton={false}
-        />
+    <div className="w-full">
+      <div className="flex items-center justify-between bg-gray-800 text-white px-4 py-2 rounded-t-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-mono">{path || "code"}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 hover:bg-gray-700 rounded"
+          >
+            {isExpanded ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={onApply}
+            className="p-1 hover:bg-gray-700 rounded"
+            title="Apply changes"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
-      {lines.length > 2 && (
-        <button
-          className="w-full text-xs text-center py-2 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 transition-colors"
-          onClick={() => setExpanded((e) => !e)}
-        >
-          {expanded
-            ? "Show less"
-            : `Show ${lines.length - 4} more line${
-                lines.length - 4 === 1 ? "" : "s"
-              }`}
-        </button>
+      {isExpanded && (
+        <pre className="bg-gray-900 text-white p-4 rounded-b-lg overflow-x-auto">
+          <code>{code}</code>
+        </pre>
       )}
     </div>
   );
-};
-
-export default ExpandableCodeBlock;
+}

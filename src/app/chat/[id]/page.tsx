@@ -31,9 +31,9 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("editor");
-  const [code, setCode] = useState<string | undefined>(undefined);
-  const [previousCode, setPreviousCode] = useState<string | undefined>(
-    undefined
+  const [files, setFiles] = useState<Record<string, string>>({});
+  const [previousFiles, setPreviousFiles] = useState<Record<string, string>>(
+    {}
   );
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const autoSubmitRef = useRef(false);
@@ -45,6 +45,7 @@ export default function ChatPage() {
   } | null>(null);
   const [isEditorVisible, setIsEditorVisible] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const { updateChat, saveCode } = useProjectApi(params.id as string);
 
@@ -55,9 +56,14 @@ export default function ChatPage() {
         if (response.ok) {
           const data = await response.json();
           setDbData(data);
-          // Set code from database if it exists and we don't have code yet
-          if (data.code && !code) {
-            setCode(data.code);
+          // Set files from database if they exist and we don't have files yet
+          if (data.files && Object.keys(files).length === 0) {
+            setFiles(data.files);
+            // Set the first file as selected
+            const firstFile = Object.keys(data.files)[0];
+            if (firstFile) {
+              setSelectedFile(firstFile);
+            }
             setActiveTab("editor");
           }
         } else {
@@ -70,7 +76,7 @@ export default function ChatPage() {
     };
 
     fetchChat();
-  }, [params.id, code]);
+  }, [params.id, files]);
 
   const {
     messages,
@@ -89,29 +95,42 @@ export default function ChatPage() {
       const updatedData = await updateChat([...messages, message]);
       setDbData(updatedData);
 
-      let codeBlock = "";
+      const newFiles: Record<string, string> = {};
       if (message.parts) {
         for (const part of message.parts) {
           if (part.type === "text" && part.text) {
-            const match = part.text.match(/```([\s\S]*?)```/);
-            if (match) {
-              codeBlock = match[1].replace(/^\n+|\n+$/g, "");
-              break;
+            // Look for file blocks in the format:
+            // ```/path/to/file.js
+            // code here
+            // ```
+            const fileBlocks = part.text.match(/```(\/[^\n]+)\n([\s\S]*?)```/g);
+            if (fileBlocks) {
+              fileBlocks.forEach((block) => {
+                const match = block.match(/```(\/[^\n]+)\n([\s\S]*?)```/);
+                if (match) {
+                  const [, path, content] = match;
+                  newFiles[path] = content.trim();
+                }
+              });
             }
           }
         }
       }
-      if (codeBlock) {
-        const newCode = codeBlock;
-        if (code) {
-          const diff = computeDiff(code, newCode);
-          setPendingChanges(diff);
-          setPreviousCode(code);
+
+      if (Object.keys(newFiles).length > 0) {
+        if (Object.keys(files).length > 0) {
+          // Compare the first file for diff highlighting
+          const firstFile = Object.keys(newFiles)[0];
+          if (firstFile && files[firstFile]) {
+            const diff = computeDiff(files[firstFile], newFiles[firstFile]);
+            setPendingChanges(diff);
+            setPreviousFiles(files);
+          }
         }
-        setCode(newCode); // Ensure editor appears
-        setIsStreamingCode(false); // End streaming state
-        setActiveTab("editor"); // Switch to editor tab
-        await saveCode(newCode);
+        setFiles(newFiles);
+        setIsStreamingCode(false);
+        setActiveTab("editor");
+        await saveCode(JSON.stringify(newFiles));
       }
     },
   });
@@ -199,9 +218,10 @@ export default function ChatPage() {
   // Helper to split markdown into bubbles (text, code)
   function parseMarkdownToBubbles(
     markdown: string
-  ): { type: "text" | "code"; content: string }[] {
-    const bubbles: { type: "text" | "code"; content: string }[] = [];
-    const codeBlockRegex = /```([\s\S]*?)```/g;
+  ): { type: "text" | "code"; content: string; path?: string }[] {
+    const bubbles: { type: "text" | "code"; content: string; path?: string }[] =
+      [];
+    const codeBlockRegex = /```(\/[^\n]+)?\n([\s\S]*?)```/g;
     let lastIndex = 0;
     let match;
     while ((match = codeBlockRegex.exec(markdown)) !== null) {
@@ -213,7 +233,8 @@ export default function ChatPage() {
       }
       bubbles.push({
         type: "code",
-        content: match[1].replace(/^\n+|\n+$/g, ""),
+        content: match[2].replace(/^\n+|\n+$/g, ""),
+        path: match[1] || undefined,
       });
       lastIndex = match.index + match[0].length;
     }
@@ -232,7 +253,8 @@ export default function ChatPage() {
     content: string,
     isUser: boolean,
     isStreaming: boolean,
-    key: string
+    key: string,
+    path?: string
   ) {
     if (type === "code") {
       // Always render code block for code bubbles in chat history
@@ -240,10 +262,21 @@ export default function ChatPage() {
         <div key={key} className="max-w-[100%] my-1 self-start">
           <ExpandableCodeBlock
             code={content}
+            path={path}
             onApply={() => {
-              setCode(content);
-              setActiveTab("editor");
-              saveCode(content);
+              if (path) {
+                setFiles((prev) => ({
+                  ...prev,
+                  [path]: content,
+                }));
+                setActiveTab("editor");
+                saveCode(
+                  JSON.stringify({
+                    ...files,
+                    [path]: content,
+                  })
+                );
+              }
             }}
           />
         </div>
@@ -266,17 +299,17 @@ export default function ChatPage() {
 
   // Function to handle accepting changes
   const handleAcceptChanges = () => {
-    if (code) {
-      setPreviousCode(code);
+    if (selectedFile && files[selectedFile]) {
+      setPreviousFiles(files);
       setPendingChanges(null);
-      saveCode(code);
+      saveCode(JSON.stringify(files));
     }
   };
 
   // Function to handle rejecting changes
   const handleRejectChanges = () => {
-    if (previousCode) {
-      setCode(previousCode);
+    if (previousFiles) {
+      setFiles(previousFiles);
       setPendingChanges(null);
     }
   };
@@ -294,7 +327,7 @@ export default function ChatPage() {
           </Alert>
         </div>
       )}
-      {code ? (
+      {Object.keys(files).length > 0 ? (
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -303,13 +336,15 @@ export default function ChatPage() {
           {/* Topbar */}
           <div
             className={`flex items-center h-14 px-6 border-b bg-white/80 backdrop-blur sticky top-0 z-30 w-full ${
-              code && isEditorVisible ? "" : "justify-between"
+              Object.keys(files).length > 0 && isEditorVisible
+                ? ""
+                : "justify-between"
             }`}
           >
             {/* Left: Chat title (always) */}
             <div
               className={
-                code && isEditorVisible
+                Object.keys(files).length > 0 && isEditorVisible
                   ? "w-1/2 flex items-center gap-2"
                   : "flex items-center gap-2"
               }
@@ -381,7 +416,8 @@ export default function ChatPage() {
                                 bubble.content,
                                 message.role === "user",
                                 isStreaming && bubble.type === "code",
-                                `${message.id}-${i}-${j}`
+                                `${message.id}-${i}-${j}`,
+                                bubble.path
                               );
                             });
                           }
@@ -413,15 +449,18 @@ export default function ChatPage() {
                     <div className="flex-1 relative">
                       <LiveCodeEditor
                         mode="editor"
-                        code={code}
-                        setCode={(newCode) => {
-                          if (code) {
-                            const diff = computeDiff(code, newCode);
+                        files={files}
+                        setFiles={(newFiles) => {
+                          if (selectedFile && files[selectedFile]) {
+                            const diff = computeDiff(
+                              files[selectedFile],
+                              newFiles[selectedFile]
+                            );
                             setPendingChanges(diff);
                           }
-                          setCode(newCode);
+                          setFiles(newFiles);
                           if (!isStreamingCode) {
-                            saveCode(newCode);
+                            saveCode(JSON.stringify(newFiles));
                           }
                         }}
                         readOnly={isStreamingCode}
@@ -436,8 +475,8 @@ export default function ChatPage() {
                 <TabsContent value="preview" className="flex-1 h-full p-0">
                   <LiveCodeEditor
                     mode="preview"
-                    code={code}
-                    setCode={setCode}
+                    files={files}
+                    setFiles={setFiles}
                     readOnly={isStreamingCode}
                   />
                 </TabsContent>
@@ -478,7 +517,8 @@ export default function ChatPage() {
                                 bubble.content,
                                 message.role === "user",
                                 isStreaming && bubble.type === "code",
-                                `${message.id}-${i}-${j}`
+                                `${message.id}-${i}-${j}`,
+                                bubble.path
                               );
                             });
                           }
