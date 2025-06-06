@@ -1,11 +1,4 @@
-import {
-  uuid,
-  pgTable,
-  varchar,
-  timestamp,
-  jsonb,
-  text,
-} from "drizzle-orm/pg-core";
+import { uuid, pgTable, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
 
 export const Projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -25,5 +18,14 @@ export const Projects = pgTable("projects", {
       }>;
     }>()
     .default({ messages: [] }),
-  code: text("code").default(""),
+  files: jsonb("files").$type<Record<string, string>>().default({}),
 });
+
+/* files example
+{
+  '/App.js': '...',
+  '/Button.js': '...',
+  '/components/Header.js': '...',
+  // etc
+}
+*/
