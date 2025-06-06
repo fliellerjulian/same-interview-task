@@ -1,2 +1,1 @@
 - compare diffs fix
-- better directory UI

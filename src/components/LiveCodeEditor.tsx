@@ -5,6 +5,7 @@ import * as Babel from "@babel/standalone";
 import Editor from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
 import { generateHTML } from "@/lib/utils";
+import { FiFile } from "react-icons/fi";
 
 interface IModelDeltaDecoration {
   range: {
@@ -55,7 +56,6 @@ function createModuleSystem(files: Record<string, string>) {
   for (const [path, code] of Object.entries(files)) {
     modules[path] = { code: compileFile(path, code) };
   }
-  console.log("MODULES (compiled code)", modules);
   return modules;
 }
 
@@ -193,16 +193,21 @@ export default function LiveCodeEditor({
   if (mode === "editor") {
     return (
       <div className="h-full w-full relative flex">
-        <div className="w-48 border-r border-gray-700 p-2 overflow-y-auto">
+        <div className="w-56 bg-gray-50 border-r border-gray-200 shadow-md p-3 overflow-y-auto flex flex-col gap-1">
           {Object.keys(files).map((path) => (
             <button
               key={path}
               onClick={() => setSelectedFile(path)}
-              className={`w-full text-left p-2 rounded ${
-                selectedFile === path ? "bg-gray-700" : "hover:bg-gray-800"
-              }`}
+              className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all duration-25 font-mono text-sm
+                ${
+                  selectedFile === path
+                    ? "bg-muted border border-border text-foreground font-semibold shadow-sm"
+                    : "hover:bg-muted/70 text-muted-foreground"
+                }
+              `}
             >
-              {path}
+              <FiFile className="text-lg opacity-70" />
+              <span className="truncate">{path}</span>
             </button>
           ))}
         </div>
