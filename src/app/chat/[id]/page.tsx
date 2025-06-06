@@ -45,7 +45,6 @@ export default function ChatPage() {
   > | null>(null);
   const [isEditorVisible, setIsEditorVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const { updateChat, saveCode } = useProjectApi(params.id as string);
 
@@ -59,11 +58,6 @@ export default function ChatPage() {
           // Set files from database if they exist and we don't have files yet
           if (data.files && Object.keys(files).length === 0) {
             setFiles(data.files);
-            // Set the first file as selected
-            const firstFile = Object.keys(data.files)[0];
-            if (firstFile) {
-              setSelectedFile(firstFile);
-            }
             setActiveTab("editor");
             setIsEditorVisible(true); // Open editor when files are available
           }
@@ -295,11 +289,9 @@ export default function ChatPage() {
 
   // Function to handle accepting changes
   const handleAcceptChanges = () => {
-    if (selectedFile && files[selectedFile]) {
-      setPreviousFiles(files);
-      setPendingChanges(null);
-      saveCode(files);
-    }
+    setPreviousFiles(files);
+    setPendingChanges(null);
+    saveCode(files);
   };
 
   // Function to handle rejecting changes
