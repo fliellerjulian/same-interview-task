@@ -75,15 +75,21 @@ export default function LiveCodeEditor({
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const decorationIdsRef = useRef<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const hasInitializedRef = useRef(false);
 
-  // Auto-select App.js when files are loaded
+  // Auto-select App.js only on initial load
   useEffect(() => {
-    const appFile = Object.keys(files).find((path) => path.endsWith("App.js"));
-    if (appFile) {
-      setSelectedFile(appFile);
-    } else if (Object.keys(files).length > 0) {
-      // Fallback to first file if App.js is not found
-      setSelectedFile(Object.keys(files)[0]);
+    if (!hasInitializedRef.current && Object.keys(files).length > 0) {
+      const appFile = Object.keys(files).find((path) =>
+        path.endsWith("App.js")
+      );
+      if (appFile) {
+        setSelectedFile(appFile);
+      } else {
+        // Fallback to first file if App.js is not found
+        setSelectedFile(Object.keys(files)[0]);
+      }
+      hasInitializedRef.current = true;
     }
   }, [files]);
 
