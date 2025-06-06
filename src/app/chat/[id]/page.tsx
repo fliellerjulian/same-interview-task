@@ -131,6 +131,7 @@ export default function ChatPage() {
         setFiles(newFiles);
         setIsStreamingCode(false);
         setActiveTab("editor");
+        setIsEditorVisible(true); // Open editor when new files are received
         await saveCode(newFiles);
       }
     },
