@@ -35,24 +35,16 @@ type LiveCodeEditorProps = {
 };
 
 function createModuleSystem(files: Record<string, string>) {
-  const modules: Record<string, { exports: Record<string, unknown> }> = {};
+  // Only compile each file and build a modules object with the compiled code as strings
+  const modules: Record<string, { code: string }> = {};
 
   const compileFile = (path: string, code: string) => {
     try {
       const result = Babel.transform(code, {
         presets: ["react"],
-        plugins: [
-          [
-            "transform-modules-umd",
-            {
-              globals: {
-                react: "React",
-                "react-dom": "ReactDOM",
-              },
-            },
-          ],
-        ],
+        plugins: [["transform-modules-commonjs"]],
       });
+      console.log("Compiled code for", path, result.code);
       return result.code;
     } catch (error) {
       console.error(`Error compiling ${path}:`, error);
@@ -61,34 +53,9 @@ function createModuleSystem(files: Record<string, string>) {
   };
 
   for (const [path, code] of Object.entries(files)) {
-    const exports: Record<string, unknown> = {};
-    const moduleObj = { exports };
-
-    const compiled = compileFile(path, code);
-    const fn = new Function("require", "exports", "module", compiled);
-
-    const require = (importPath: string) => {
-      // Handle relative imports
-      let resolvedPath = new URL(importPath, `file://${path}`).pathname;
-      // Ensure .js extension
-      if (!resolvedPath.endsWith(".js")) {
-        resolvedPath += ".js";
-      }
-      if (!modules[resolvedPath]) {
-        console.error(`Module not found: ${resolvedPath}`);
-        return {};
-      }
-      return modules[resolvedPath].exports;
-    };
-
-    try {
-      fn(require, exports, moduleObj);
-      modules[path] = moduleObj;
-    } catch (error) {
-      console.error(`Error executing ${path}:`, error);
-    }
+    modules[path] = { code: compileFile(path, code) };
   }
-  console.log("MODULES", modules);
+  console.log("MODULES (compiled code)", modules);
   return modules;
 }
 
@@ -190,17 +157,37 @@ export default function LiveCodeEditor({
     ) {
       try {
         const modules = createModuleSystem(files);
-        const entryPoint = Object.keys(files).find(
-          (path) => path.endsWith("App.js") || path.endsWith("index.js")
-        );
-
-        if (!entryPoint) {
-          throw new Error("No entry point found (App.js or index.js)");
-        }
-
         const html = generateHTML(`
-          window.modules = ${JSON.stringify(modules)};
-          const App = modules['${entryPoint}'].exports.default;
+          // Build modules system in the iframe
+          const modules = {};
+          const moduleFns = {};
+          const moduleCodes = ${JSON.stringify(modules)};
+          for (const path in moduleCodes) {
+            moduleFns[path] = new Function('require', 'exports', 'module', moduleCodes[path].code);
+          }
+          function require(path, from) {
+            let resolvedPath = new URL(path, 'file://' + (from || '/App.js')).pathname;
+            if (!resolvedPath.endsWith('.js')) resolvedPath += '.js';
+            if (!modules[resolvedPath]) {
+              // Prepare empty exports and module
+              const exports = {};
+              const module = { exports };
+              modules[resolvedPath] = module;
+              // Execute the module code
+              if (moduleFns[resolvedPath]) {
+                moduleFns[resolvedPath]((p) => require(p, resolvedPath), exports, module);
+              } else {
+                console.error('Module not found:', resolvedPath);
+              }
+            }
+            return modules[resolvedPath].exports;
+          }
+          // Load entry point
+          const entryPoint = Object.keys(moduleCodes).find(p => p.endsWith('App.js') || p.endsWith('index.js'));
+          if (!entryPoint) throw new Error('No entry point found (App.js or index.js)');
+          const entryExports = require(entryPoint);
+          console.log('EXPORTS', entryExports);
+          const App = entryExports.default || entryExports;
           ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
         `);
 
