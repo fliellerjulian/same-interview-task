@@ -57,7 +57,19 @@ export const computeDiff = (oldCode: string, newCode: string) => {
   return { additions, deletions };
 };
 
-export const generateHTML = (compiledCode: string) => `
+export const generateHTML = (modules: Record<string, { code: string }>) => {
+  // Validate modules
+  if (!modules || Object.keys(modules).length === 0) {
+    throw new Error("No modules provided to generate HTML");
+  }
+
+  // Find entry point
+  const entryPoint = Object.keys(modules).find((p) => p.endsWith("App.js"));
+  if (!entryPoint) {
+    throw new Error("No entry point found (App.js");
+  }
+
+  return `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -82,12 +94,80 @@ export const generateHTML = (compiledCode: string) => `
 
       // Wrap the code in an IIFE to avoid global scope pollution
       (function() {
-        ${compiledCode}
+        try {
+          // Build modules system in the iframe
+          const modules = {};
+          const moduleFns = {};
+          const moduleCodes = ${JSON.stringify(modules)};
+          
+          // Initialize module functions
+          for (const path in moduleCodes) {
+            try {
+              moduleFns[path] = new Function('require', 'exports', 'module', moduleCodes[path].code);
+            } catch (error) {
+              console.error('Error initializing module:', path, error);
+              throw new Error('Failed to initialize module: ' + path);
+            }
+          }
+
+          // Module system
+          function require(path, from) {
+            if (path === "react") return window.React;
+            if (path === "react-dom") return window.ReactDOM;
+            
+            let resolvedPath = new URL(path, 'file://' + (from || '/App.js')).pathname;
+            if (!resolvedPath.endsWith('.js')) resolvedPath += '.js';
+            
+            if (!modules[resolvedPath]) {
+              // Prepare empty exports and module
+              const exports = {};
+              const module = { exports };
+              modules[resolvedPath] = module;
+              
+              // Execute the module code
+              if (moduleFns[resolvedPath]) {
+                try {
+                  moduleFns[resolvedPath]((p) => require(p, resolvedPath), exports, module);
+                } catch (error) {
+                  console.error('Error executing module:', resolvedPath, error);
+                  throw new Error('Failed to execute module: ' + resolvedPath);
+                }
+              } else {
+                throw new Error('Module not found: ' + resolvedPath);
+              }
+            }
+            return modules[resolvedPath].exports;
+          }
+
+          // Load and render the app
+          const entryExports = require('${entryPoint}');
+          const App = entryExports.default || entryExports;
+          
+          if (!App || typeof App !== 'function') {
+            throw new Error('Invalid entry point: App component not found or not a function');
+          }
+
+          ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+        } catch (error) {
+          // Display error in the root div
+          const root = document.getElementById('root');
+          if (root) {
+            root.innerHTML = \`
+              <div style="color: red; padding: 20px; font-family: monospace;">
+                <h2>Error Loading Application</h2>
+                <pre>\${error.message}</pre>
+                <p>Check the console for more details.</p>
+              </div>
+            \`;
+          }
+          console.error('Application Error:', error);
+        }
       })();
     </script>
   </body>
 </html>
 `;
+};
 
 // Remove a leading jsx, js, or similar line
 export const stripCodeBlockLang = (code: string) => {

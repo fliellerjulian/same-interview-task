@@ -157,41 +157,7 @@ export default function LiveCodeEditor({
     ) {
       try {
         const modules = createModuleSystem(files);
-        const html = generateHTML(`
-          // Build modules system in the iframe
-          const modules = {};
-          const moduleFns = {};
-          const moduleCodes = ${JSON.stringify(modules)};
-          for (const path in moduleCodes) {
-            moduleFns[path] = new Function('require', 'exports', 'module', moduleCodes[path].code);
-          }
-          function require(path, from) {
-            if (path === "react") return window.React;
-            if (path === "react-dom") return window.ReactDOM;
-            let resolvedPath = new URL(path, 'file://' + (from || '/App.js')).pathname;
-            if (!resolvedPath.endsWith('.js')) resolvedPath += '.js';
-            if (!modules[resolvedPath]) {
-              // Prepare empty exports and module
-              const exports = {};
-              const module = { exports };
-              modules[resolvedPath] = module;
-              // Execute the module code
-              if (moduleFns[resolvedPath]) {
-                moduleFns[resolvedPath]((p) => require(p, resolvedPath), exports, module);
-              } else {
-                console.error('Module not found:', resolvedPath);
-              }
-            }
-            return modules[resolvedPath].exports;
-          }
-          // Load entry point
-          const entryPoint = Object.keys(moduleCodes).find(p => p.endsWith('App.js') || p.endsWith('index.js'));
-          if (!entryPoint) throw new Error('No entry point found (App.js or index.js)');
-          const entryExports = require(entryPoint);
-          console.log('EXPORTS', entryExports);
-          const App = entryExports.default || entryExports;
-          ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-        `);
+        const html = generateHTML(modules);
 
         const blob = new Blob([html], { type: "text/html" });
         const url = URL.createObjectURL(blob);
