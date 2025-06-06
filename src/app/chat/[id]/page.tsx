@@ -43,7 +43,7 @@ export default function ChatPage() {
     additions: string[];
     deletions: string[];
   } | null>(null);
-  const [isEditorVisible, setIsEditorVisible] = useState(true);
+  const [isEditorVisible, setIsEditorVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
@@ -65,6 +65,7 @@ export default function ChatPage() {
               setSelectedFile(firstFile);
             }
             setActiveTab("editor");
+            setIsEditorVisible(true); // Open editor when files are available
           }
         } else {
           throw new Error("Failed to fetch chat data");
@@ -76,7 +77,7 @@ export default function ChatPage() {
     };
 
     fetchChat();
-  }, [params.id, files]);
+  }, [params.id]);
 
   const {
     messages,
@@ -130,7 +131,7 @@ export default function ChatPage() {
         setFiles(newFiles);
         setIsStreamingCode(false);
         setActiveTab("editor");
-        await saveCode(files);
+        await saveCode(newFiles);
       }
     },
   });
@@ -265,12 +266,15 @@ export default function ChatPage() {
             path={path}
             onApply={() => {
               if (path) {
-                setFiles((prev) => ({
-                  ...prev,
-                  [path]: content,
-                }));
+                setFiles((prev) => {
+                  const newFiles = {
+                    ...prev,
+                    [path]: content,
+                  };
+                  saveCode(newFiles);
+                  return newFiles;
+                });
                 setActiveTab("editor");
-                saveCode(files);
               }
             }}
           />
@@ -455,7 +459,7 @@ export default function ChatPage() {
                           }
                           setFiles(newFiles);
                           if (!isStreamingCode) {
-                            saveCode(files);
+                            saveCode(newFiles);
                           }
                         }}
                         readOnly={isStreamingCode}
