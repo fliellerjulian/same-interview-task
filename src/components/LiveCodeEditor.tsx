@@ -69,7 +69,11 @@ function createModuleSystem(files: Record<string, string>) {
 
     const require = (importPath: string) => {
       // Handle relative imports
-      const resolvedPath = new URL(importPath, `file://${path}`).pathname;
+      let resolvedPath = new URL(importPath, `file://${path}`).pathname;
+      // Ensure .js extension
+      if (!resolvedPath.endsWith(".js")) {
+        resolvedPath += ".js";
+      }
       if (!modules[resolvedPath]) {
         console.error(`Module not found: ${resolvedPath}`);
         return {};
@@ -84,7 +88,7 @@ function createModuleSystem(files: Record<string, string>) {
       console.error(`Error executing ${path}:`, error);
     }
   }
-
+  console.log("MODULES", modules);
   return modules;
 }
 
