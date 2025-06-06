@@ -14,9 +14,14 @@ export default function ExpandableCodeBlock({
 }: ExpandableCodeBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Always show the first 2 lines in the editor when collapsed
+  const codeLines = code.split("\n");
+  const previewValue =
+    codeLines.slice(0, 2).join("\n") + (codeLines.length > 2 ? "\n..." : "");
+
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between bg-gray-800 text-white px-4 py-2 rounded-t-lg">
+      <div className="flex items-center justify-between bg-gray-800 text-white px-4 py-2 w-full">
         <div className="flex items-center gap-2">
           <span className="text-sm font-mono">{path || "code"}</span>
         </div>
@@ -62,29 +67,27 @@ export default function ExpandableCodeBlock({
           </button>
         </div>
       </div>
-      {isExpanded && (
-        <div className="bg-gray-900 rounded-b-lg overflow-x-auto">
-          <Editor
-            height="200px"
-            width="100%"
-            defaultLanguage="javascript"
-            value={code}
-            theme="vs-dark"
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              wordWrap: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              readOnly: true,
-              lineNumbers: "on",
-              glyphMargin: true,
-              lineDecorationsWidth: 5,
-              lineNumbersMinChars: 3,
-            }}
-          />
-        </div>
-      )}
+      <div className="bg-gray-900 w-full rounded-b-lg overflow-x-auto">
+        <Editor
+          height={isExpanded ? "200px" : "60px"}
+          width="100%"
+          defaultLanguage="javascript"
+          value={isExpanded ? code : previewValue}
+          theme="vs-dark"
+          options={{
+            fontSize: 14,
+            minimap: { enabled: false },
+            wordWrap: "on",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            readOnly: true,
+            lineNumbers: "on",
+            glyphMargin: true,
+            lineDecorationsWidth: 5,
+            lineNumbersMinChars: 3,
+          }}
+        />
+      </div>
     </div>
   );
 }

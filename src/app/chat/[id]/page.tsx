@@ -261,7 +261,7 @@ export default function ChatPage() {
     if (type === "code") {
       // Always render code block for code bubbles in chat history
       return (
-        <div key={key} className="max-w-[100%] my-1 self-start">
+        <div key={key} className="w-full my-1">
           <ExpandableCodeBlock
             code={content}
             path={path}
