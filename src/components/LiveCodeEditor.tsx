@@ -76,6 +76,17 @@ export default function LiveCodeEditor({
   const decorationIdsRef = useRef<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
+  // Auto-select App.js when files are loaded
+  useEffect(() => {
+    const appFile = Object.keys(files).find((path) => path.endsWith("App.js"));
+    if (appFile) {
+      setSelectedFile(appFile);
+    } else if (Object.keys(files).length > 0) {
+      // Fallback to first file if App.js is not found
+      setSelectedFile(Object.keys(files)[0]);
+    }
+  }, [files]);
+
   const handleCopy = async () => {
     if (selectedFile && files[selectedFile]) {
       try {
