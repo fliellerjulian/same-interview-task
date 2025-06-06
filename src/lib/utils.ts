@@ -19,42 +19,52 @@ export async function uploadFiles(
   };
 }
 
-export const computeDiff = (oldCode: string, newCode: string) => {
-  const oldLines = oldCode.split("\n");
-  const newLines = newCode.split("\n");
-  const additions: string[] = [];
-  const deletions: string[] = [];
-
-  let i = 0,
-    j = 0;
-  while (i < oldLines.length || j < newLines.length) {
-    if (i >= oldLines.length) {
-      additions.push(newLines[j]);
-      j++;
-    } else if (j >= newLines.length) {
-      deletions.push(oldLines[i]);
-      i++;
-    } else if (oldLines[i] === newLines[j]) {
-      i++;
-      j++;
-    } else {
-      // Check if it's an addition or deletion
-      if (j + 1 < newLines.length && oldLines[i] === newLines[j + 1]) {
-        additions.push(newLines[j]);
+export const computeDiff = (
+  oldFiles: Record<string, string>,
+  newFiles: Record<string, string>
+) => {
+  const diff: Record<string, { additions: number[]; deletions: number[] }> = {};
+  const allFiles = new Set([
+    ...Object.keys(oldFiles),
+    ...Object.keys(newFiles),
+  ]);
+  for (const file of allFiles) {
+    const oldLines = (oldFiles[file] || "").split("\n");
+    const newLines = (newFiles[file] || "").split("\n");
+    const additions: number[] = [];
+    const deletions: number[] = [];
+    let i = 0,
+      j = 0;
+    while (i < oldLines.length || j < newLines.length) {
+      if (i >= oldLines.length) {
+        additions.push(j + 1);
         j++;
-      } else if (i + 1 < oldLines.length && oldLines[i + 1] === newLines[j]) {
-        deletions.push(oldLines[i]);
+      } else if (j >= newLines.length) {
+        deletions.push(i + 1);
         i++;
+      } else if (oldLines[i] === newLines[j]) {
+        i++;
+        j++;
       } else {
-        additions.push(newLines[j]);
-        deletions.push(oldLines[i]);
-        i++;
-        j++;
+        if (j + 1 < newLines.length && oldLines[i] === newLines[j + 1]) {
+          additions.push(j + 1);
+          j++;
+        } else if (i + 1 < oldLines.length && oldLines[i + 1] === newLines[j]) {
+          deletions.push(i + 1);
+          i++;
+        } else {
+          additions.push(j + 1);
+          deletions.push(i + 1);
+          i++;
+          j++;
+        }
       }
     }
+    if (additions.length > 0 || deletions.length > 0) {
+      diff[file] = { additions, deletions };
+    }
   }
-
-  return { additions, deletions };
+  return diff;
 };
 
 export const generateHTML = (modules: Record<string, { code: string }>) => {

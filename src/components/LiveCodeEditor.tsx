@@ -26,10 +26,10 @@ type LiveCodeEditorProps = {
   files?: Record<string, string>;
   setFiles?: (files: Record<string, string>) => void;
   readOnly?: boolean;
-  highlightChanges?: {
-    additions: string[];
-    deletions: string[];
-  } | null;
+  highlightChanges?: Record<
+    string,
+    { additions: number[]; deletions: number[] }
+  > | null;
   showCopyButton?: boolean;
   onAcceptChanges?: () => void;
   onRejectChanges?: () => void;
@@ -45,7 +45,7 @@ function createModuleSystem(files: Record<string, string>) {
         presets: ["react"],
         plugins: [["transform-modules-commonjs"]],
       });
-      console.log("Compiled code for", path, result.code);
+      //console.log("Compiled code for", path, result.code);
       return result.code;
     } catch (error) {
       console.error(`Error compiling ${path}:`, error);
@@ -108,43 +108,43 @@ export default function LiveCodeEditor({
   // Function to get line decorations for diff highlighting
   const getLineDecorations = () => {
     if (!highlightChanges || !selectedFile || !files[selectedFile]) return [];
-    const lines = files[selectedFile].split("\n");
+    const fileDiff = (
+      highlightChanges as Record<
+        string,
+        { additions: number[]; deletions: number[] }
+      >
+    )[selectedFile];
+    if (!fileDiff) return [];
     const decorations: IModelDeltaDecoration[] = [];
-    highlightChanges.additions.forEach((line) => {
-      const lineNumber = lines.findIndex((l) => l === line) + 1;
-      if (lineNumber > 0) {
-        decorations.push({
-          range: {
-            startLineNumber: lineNumber,
-            startColumn: 1,
-            endLineNumber: lineNumber,
-            endColumn: 1000,
-          },
-          options: {
-            isWholeLine: true,
-            className: "my-whole-line-addition",
-            glyphMarginClassName: "bg-green-600",
-          },
-        });
-      }
+    fileDiff.additions.forEach((lineNumber: number) => {
+      decorations.push({
+        range: {
+          startLineNumber: lineNumber,
+          startColumn: 1,
+          endLineNumber: lineNumber,
+          endColumn: 1000,
+        },
+        options: {
+          isWholeLine: true,
+          className: "my-whole-line-addition",
+          glyphMarginClassName: "bg-green-600",
+        },
+      });
     });
-    highlightChanges.deletions.forEach((line) => {
-      const lineNumber = lines.findIndex((l) => l === line) + 1;
-      if (lineNumber > 0) {
-        decorations.push({
-          range: {
-            startLineNumber: lineNumber,
-            startColumn: 1,
-            endLineNumber: lineNumber,
-            endColumn: 1000,
-          },
-          options: {
-            isWholeLine: true,
-            className: "my-whole-line-deletion",
-            glyphMarginClassName: "bg-red-500",
-          },
-        });
-      }
+    fileDiff.deletions.forEach((lineNumber: number) => {
+      decorations.push({
+        range: {
+          startLineNumber: lineNumber,
+          startColumn: 1,
+          endLineNumber: lineNumber,
+          endColumn: 1000,
+        },
+        options: {
+          isWholeLine: true,
+          className: "my-whole-line-deletion",
+          glyphMarginClassName: "bg-red-500",
+        },
+      });
     });
     return decorations;
   };

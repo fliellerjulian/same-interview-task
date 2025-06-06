@@ -39,10 +39,10 @@ export default function ChatPage() {
   const autoSubmitRef = useRef(false);
   const [isStreamingCode, setIsStreamingCode] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<{
-    additions: string[];
-    deletions: string[];
-  } | null>(null);
+  const [pendingChanges, setPendingChanges] = useState<Record<
+    string,
+    { additions: number[]; deletions: number[] }
+  > | null>(null);
   const [isEditorVisible, setIsEditorVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -120,13 +120,9 @@ export default function ChatPage() {
 
       if (Object.keys(newFiles).length > 0) {
         if (Object.keys(files).length > 0) {
-          // Compare the first file for diff highlighting
-          const firstFile = Object.keys(newFiles)[0];
-          if (firstFile && files[firstFile]) {
-            const diff = computeDiff(files[firstFile], newFiles[firstFile]);
-            setPendingChanges(diff);
-            setPreviousFiles(files);
-          }
+          const diff = computeDiff(files, newFiles);
+          setPendingChanges(diff);
+          setPreviousFiles(files);
         }
         setFiles(newFiles);
         setIsStreamingCode(false);
@@ -451,12 +447,16 @@ export default function ChatPage() {
                         mode="editor"
                         files={files}
                         setFiles={(newFiles) => {
-                          if (selectedFile && files[selectedFile]) {
-                            const diff = computeDiff(
-                              files[selectedFile],
-                              newFiles[selectedFile]
-                            );
-                            setPendingChanges(diff);
+                          if (
+                            Object.keys(newFiles).length ===
+                              Object.keys(files).length &&
+                            Object.keys(newFiles).every(
+                              (k) =>
+                                newFiles[k] === files[k] ||
+                                newFiles[k] !== undefined
+                            )
+                          ) {
+                            setPendingChanges(null);
                           }
                           setFiles(newFiles);
                           if (!isStreamingCode) {

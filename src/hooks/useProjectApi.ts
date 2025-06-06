@@ -24,7 +24,7 @@ export const useProjectApi = (projectId: string) => {
           chat: { messages: mergedMessages },
         }),
       });
-      console.log("response", response);
+      //console.log("response", response);
       if (!response.ok) {
         throw new Error("Failed to update chat");
       }
